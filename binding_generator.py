@@ -123,10 +123,10 @@ def generate_class_header(used_classes, c):
     source.append("public:")
     source.append("")
 
-    # ___get_class_name
-    source.append("\tstatic inline char *___get_class_name() { return (char *) \"" + strip_name(c["name"]) + "\"; }")
+    # __get_class_name
+    source.append("\tstatic inline char *__get_class_name() { return (char *) \"" + strip_name(c["name"]) + "\"; }")
 
-    source.append("\tstatic inline Object *___get_from_variant(Variant a) { return (Object *) a; }")
+    #source.append("\tstatic inline Object *__get_from_variant(Variant a) { return (Object *) a; }")
 
     enum_values = []
 

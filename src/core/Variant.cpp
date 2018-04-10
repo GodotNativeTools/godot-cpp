@@ -6,8 +6,6 @@
 #include "CoreTypes.hpp"
 #include "GodotGlobal.hpp"
 
-#include <iostream>
-
 namespace godot {
 
 Variant::Variant()
@@ -99,7 +97,7 @@ Variant::Variant(const Plane& p_plane)
 }
 
 
-Variant::Variant(const AABB& p_aabb)
+Variant::Variant(const godot::AABB& p_aabb)
 {
 	godot::api->godot_variant_new_aabb(&_godot_variant, (godot_aabb *) &p_aabb);
 }
@@ -274,10 +272,10 @@ Variant::operator Plane() const
 	godot_plane s = godot::api->godot_variant_as_plane(&_godot_variant);
 	return *(Plane *) &s;
 }
-Variant::operator AABB() const
+Variant::operator godot::AABB() const
 {
 	godot_aabb s = godot::api->godot_variant_as_aabb(&_godot_variant);
-	return *(AABB *) &s;
+	return *(godot::AABB *) &s;
 }
 Variant::operator Quat() const
 {

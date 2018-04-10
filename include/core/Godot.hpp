@@ -15,77 +15,65 @@
 #include <Object.hpp>
 
 #include <core/GodotGlobal.hpp>
+#include <core/GodotScript.h>
+#include "ObjectUtil.hpp"
+#include "Traits.hpp"
+#include "TagDB.hpp"
 
 
 namespace godot {
 
 
-template<class T>
-T *as(Object *obj)
-{
-	return (T *) godot::nativescript_api->godot_nativescript_get_userdata(obj);
+#ifdef GODOT_TYPE_CHECKS
+static void _print_arg_error(String expected, String got) {
+	// TODO Print call stack if possible, since it's an error from the caller (GDScript usage?)
+	Godot::print_error(String("expected ") + expected + String(", got ") + got, "", "", -1);
 }
-
-
-template<class T>
-class GodotScript {
-public:
-	T *owner;
-
-	// GodotScript() {}
-
-	void _init() {}
-	static const char *___get_base_type_name()
-	{
-		return T::___get_class_name();
-	}
-
-	static GodotScript<T> *___get_from_variant(Variant a)
-	{
-		return as<GodotScript<T> >((Object *) a);
-	}
-
-	static void _register_methods() {}
-};
-
-
-
-#define GODOT_CLASS(Name) \
-	public: inline static const char *___get_type_name() { return static_cast<const char *>(#Name); } \
-	private:
-
-#define GODOT_SUBCLASS(Name, Base) \
-	public: inline static const char *___get_type_name() { return static_cast<const char *>(#Name); } \
-	inline static const char *___get_base_type_name() { return static_cast<const char *>(#Base); } \
-	private:
-
+#endif
 
 template<class T>
 struct _ArgCast {
+#ifdef GODOT_TYPE_CHECKS
+	// For basic types only
+	static T _arg_cast(Variant a) {
+		if(a.get_type() != VariantTraits<T>::id()) {
+			_print_arg_error(VariantTraits<T>::str(), a);
+		}
+		return a;
+	}
+#else
+	// Pass-through convert all to Variant without checks
 	static T _arg_cast(Variant a)
 	{
 		return a;
 	}
+#endif
 };
 
+// For object types
 template<class T>
 struct _ArgCast<T*> {
-	static T *_arg_cast(Variant a)
-	{
-		return (T *) T::___get_from_variant(a);
+	static T *_arg_cast(Variant a) {
+		return ObjectUtil<T>::get_from_variant(a);
 	}
 };
 
+// For reference types
+template<class T>
+struct _ArgCast< Ref<T> > {
+	static Ref<T> _arg_cast(Variant a) {
+		T *obj = ObjectUtil<T>::get_from_variant(a);
+		return obj;
+	}
+};
+
+// For actual variants (type check is left to you)
 template<>
 struct _ArgCast<Variant> {
-	static Variant _arg_cast(Variant a)
-	{
+	static Variant _arg_cast(Variant a) {
 		return a;
 	}
 };
-
-
-
 
 
 // instance and destroy funcs
@@ -93,53 +81,14 @@ struct _ArgCast<Variant> {
 template<class T>
 void *_godot_class_instance_func(godot_object *p, void *method_data)
 {
-	T *d = new T();
-	*(godot_object **) &d->owner = p;
-	d->_init();
-	return d;
+	return __instance_script_on_existing_object<T>(p);
 }
 
 template<class T>
 void _godot_class_destroy_func(godot_object *p, void *method_data, void *data)
 {
-	T *d = (T *) data;
-	delete d;
+	__destroy_script<T>(data);
 }
-
-
-template<class T>
-void register_class()
-{
-	godot_instance_create_func create = {};
-	create.create_func = _godot_class_instance_func<T>;
-
-	godot_instance_destroy_func destroy = {};
-	destroy.destroy_func = _godot_class_destroy_func<T>;
-
-
-	godot::nativescript_api->godot_nativescript_register_class(godot::_RegisterState::nativescript_handle, T::___get_type_name(), T::___get_base_type_name(), create, destroy);
-	T::_register_methods();
-}
-
-template<class T>
-void register_tool_class()
-{
-	godot_instance_create_func create = {};
-	create.create_func = _godot_class_instance_func<T>;
-
-	godot_instance_destroy_func destroy = {};
-	destroy.destroy_func = _godot_class_destroy_func<T>;
-
-
-	godot::nativescript_api->godot_nativescript_register_tool_class(godot::_RegisterState::nativescript_handle, T::___get_type_name(), T::___get_base_type_name(), create, destroy);
-	T::_register_methods();
-}
-
-
-
-
-
-
 
 
 
@@ -154,13 +103,13 @@ typedef godot_variant (*__godot_wrapper_method)(godot_object *, void *, void *, 
 template<class T, class R, class ...args>
 const char *___get_method_class_name(R (T::*p)(args... a))
 {
-	return T::___get_type_name();
+	return T::__get_class_name();
 }
 
 template<class T, class R, class ...args>
 const char *___get_method_class_name(R (T::*p)(args... a) const)
 {
-	return T::___get_type_name();
+	return T::__get_class_name();
 }
 
 
@@ -223,6 +172,15 @@ godot_variant __wrapped_method(godot_object *, void *method_data, void *user_dat
 	Variant *var = (Variant *) &v;
 	Variant **arg = (Variant **) args;
 
+#ifdef GODOT_TYPE_CHECKS
+	if(num_args != sizeof...(As)) {
+		// TODO Print call stack if possible, since it's an error from the caller (GDScript usage?)
+		String msg = String("expected ") + String::num(sizeof...(As)) + String(" arguments, got ") + String::num(num_args);
+		Godot::print_error(msg, "", "", -1);
+		return v;
+	}
+#endif
+
 	method->apply(var, obj, arg, typename __construct_sequence<sizeof...(As)>::type {});
 
 	return v;
@@ -273,7 +231,7 @@ __godot_wrapper_method ___get_wrapper_function(R (T::*f)(A...) const)
 
 
 template<class M>
-void register_method(const char *name, M method_ptr, godot_method_rpc_mode rpc_type = GODOT_METHOD_RPC_MODE_DISABLED)
+void register_method_cn(const char *class_name, const char *name, M method_ptr, godot_method_rpc_mode rpc_type = GODOT_METHOD_RPC_MODE_DISABLED)
 {
 	godot_instance_method method = {};
 	method.method_data = ___make_wrapper_function(method_ptr);
@@ -284,7 +242,13 @@ void register_method(const char *name, M method_ptr, godot_method_rpc_mode rpc_t
 	godot_method_attributes attr = {};
 	attr.rpc_type = rpc_type;
 
-	godot::nativescript_api->godot_nativescript_register_method(godot::_RegisterState::nativescript_handle, ___get_method_class_name(method_ptr), name, attr, method);
+	godot::nativescript_api->godot_nativescript_register_method(godot::_RegisterState::nativescript_handle, class_name, name, attr, method);
+}
+
+template<class M>
+void register_method(const char *name, M method_ptr, godot_method_rpc_mode rpc_type = GODOT_METHOD_RPC_MODE_DISABLED)
+{
+	register_method_cn<M>(___get_method_class_name(method_ptr), name, method_ptr, rpc_type);
 }
 
 
@@ -402,7 +366,7 @@ void register_property(const char *name, P (T::*var), P default_value, godot_met
 	get_func.free_func   = godot::api->godot_free;
 	get_func.get_func    = &_PropertyDefaultGetFunc<T, P>::_wrapped_getter;
 
-	godot::nativescript_api->godot_nativescript_register_property(godot::_RegisterState::nativescript_handle, T::___get_type_name(), name, &attr, set_func, get_func);
+	godot::nativescript_api->godot_nativescript_register_property(godot::_RegisterState::nativescript_handle, T::__get_class_name(), name, &attr, set_func, get_func);
 }
 
 
@@ -436,7 +400,7 @@ void register_property(const char *name, void (T::*setter)(P), P (T::*getter)(),
 	get_func.free_func   = godot::api->godot_free;
 	get_func.get_func    = &_PropertyGetFunc<T, P>::_wrapped_getter;
 
-	godot::nativescript_api->godot_nativescript_register_property(godot::_RegisterState::nativescript_handle, T::___get_type_name(), name, &attr, set_func, get_func);
+	godot::nativescript_api->godot_nativescript_register_property(godot::_RegisterState::nativescript_handle, T::__get_class_name(), name, &attr, set_func, get_func);
 
 }
 
@@ -473,7 +437,7 @@ void register_signal(String name, Dictionary args = Dictionary())
 		signal.args[i].type = args.values()[i];
 	}
 
-	godot::nativescript_api->godot_nativescript_register_signal(godot::_RegisterState::nativescript_handle, T::___get_type_name(), &signal);
+	godot::nativescript_api->godot_nativescript_register_signal(godot::_RegisterState::nativescript_handle, T::__get_class_name(), &signal);
 
 	for (int i = 0; i < signal.num_args; i++) {
 		godot::api->godot_string_destroy(&signal.args[i].name);
@@ -489,6 +453,49 @@ void register_signal(String name, Args... varargs)
 {
 	register_signal<T>(name, Dictionary::make(varargs...));
 }
+
+// Class registration
+
+template<class T>
+void register_class()
+{
+	godot_instance_create_func create = {};
+	create.create_func = _godot_class_instance_func<T>;
+
+	godot_instance_destroy_func destroy = {};
+	destroy.destroy_func = _godot_class_destroy_func<T>;
+
+
+	godot::nativescript_api->godot_nativescript_register_class(godot::_RegisterState::nativescript_handle, T::__get_class_name(), T::__get_base_class_name(), create, destroy);
+	T::_register_methods();
+
+	_TagDB::add(__get_typetag<T>(), T::__get_base_typetag());
+
+	// This is needed for typetag unregistration...
+	// As a result, you should not bind this method yourself, it is always called as virtual (like in Godot core).
+	// Also, a registration variant has to be used because the function is part of GodotScript and GodotScript has no __get_class_name.
+	// (using the template magic would yield the class where the function is defined, not the class we are currently registering)
+	register_method_cn(T::__get_class_name(), "_notification", &T::_notification);
+}
+
+template<class T>
+void register_tool_class()
+{
+	godot_instance_create_func create = {};
+	create.create_func = _godot_class_instance_func<T>;
+
+	godot_instance_destroy_func destroy = {};
+	destroy.destroy_func = _godot_class_destroy_func<T>;
+
+
+	godot::nativescript_api->godot_nativescript_register_tool_class(godot::_RegisterState::nativescript_handle, T::__get_class_name(), T::__get_base_class_name(), create, destroy);
+	T::_register_methods();
+
+	_TagDB::add(__get_typetag<T>(), T::__get_base_typetag());
+
+	register_method_cn(T::__get_class_name(), "_notification", &T::_notification);
+}
+
 
 }
 

@@ -15,8 +15,6 @@ void Godot::print(const String& message)
 
 void Godot::print_warning(const String& description, const String& function, const String& file, int line)
 {
-	int len;
-
 	char * c_desc = description.alloc_c_string();
 	char * c_func = function.alloc_c_string();
 	char * c_file = file.alloc_c_string();
@@ -32,8 +30,6 @@ void Godot::print_warning(const String& description, const String& function, con
 
 void Godot::print_error(const String& description, const String& function, const String& file, int line)
 {
-	int len;
-
 	char * c_desc = description.alloc_c_string();
 	char * c_func = function.alloc_c_string();
 	char * c_file = file.alloc_c_string();

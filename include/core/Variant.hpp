@@ -20,8 +20,6 @@
 #include "Vector2.hpp"
 #include "Vector3.hpp"
 
-#include <iostream>
-
 namespace godot {
 
 class Dictionary;
@@ -49,7 +47,7 @@ public:
 		TRANSFORM2D,
 		PLANE,
 		QUAT,			// 10
-		RECT3, //sorry naming convention fail :( not like it's used often
+		AABB,
 		BASIS,
 		TRANSFORM,
 
@@ -154,7 +152,7 @@ public:
 	Variant(const Plane& p_plane);
 
 
-	Variant(const AABB& p_aabb);
+	Variant(const godot::AABB& p_aabb);
 
 	Variant(const Quat& p_quat);
 
@@ -215,7 +213,7 @@ public:
 	operator Rect2() const;
 	operator Vector3() const;
 	operator Plane() const;
-	operator AABB() const;
+	operator godot::AABB() const;
 	operator Quat() const;
 	operator Basis() const;
 	operator Transform() const;

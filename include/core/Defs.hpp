@@ -1,6 +1,7 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+#define GODOT_TYPE_CHECKS
 
 namespace godot {
 
@@ -97,6 +98,7 @@ enum Error {
 }
 
 #include <stdio.h>
+#include <malloc.h>
 
 typedef float real_t;
 
