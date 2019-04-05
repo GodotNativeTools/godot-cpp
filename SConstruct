@@ -111,6 +111,47 @@ elif env['platform'] == 'windows':
         env.Append(CCFLAGS=['-g', '-O3', '-std=c++14', '-Wwrite-strings'])
         env.Append(LINKFLAGS=['--static', '-Wl,--no-undefined', '-static-libgcc', '-static-libstdc++'])
 
+elif target_platform == 'uwp':
+    # blatently stolen from godot uwp platform, I have no idea what half of this does...
+    vc_base_path = os.environ['VCTOOLSINSTALLDIR'] if "VCTOOLSINSTALLDIR" in os.environ else os.environ['VCINSTALLDIR']
+
+    if target == "debug":
+        env.Append(CCFLAGS=['/Zi', '/DDEBUG_ENABLED', '/DDEBUG_MEMORY_ENABLED'])
+        env.Append(CPPFLAGS=['/MDd'])
+        env.Append(LINKFLAGS=['/DEBUG'])
+    else:
+        env.Append(CPPFLAGS=['/O2', '/GL'])
+        env.Append(CPPFLAGS=['/MD'])
+        env.Append(LINKFLAGS=['/LTCG'])
+
+    if (target_arch == '32'):
+        env.Append(LINKFLAGS=['/MACHINE:X86'])
+    else:
+        env.Append(LINKFLAGS=['/MACHINE:X64'])
+
+    env.Append(CPPPATH=['#platform/uwp', '#drivers/windows'])
+    env.Append(CCFLAGS=['/DUWP_ENABLED', '/DWINDOWS_ENABLED', '/DTYPED_METHOD_BIND'])
+    env.Append(CCFLAGS=['/DGLES_ENABLED', '/DGL_GLEXT_PROTOTYPES', '/DEGL_EGLEXT_PROTOTYPES', '/DANGLE_ENABLED'])
+    winver = "0x0602" # Windows 8 is the minimum target for UWP build
+    env.Append(CCFLAGS=['/DWINVER=%s' % winver, '/D_WIN32_WINNT=%s' % winver])
+
+    env.Append(CPPFLAGS=['/AI', vc_base_path + 'lib/store/references'])
+    env.Append(CPPFLAGS=['/AI', vc_base_path + 'lib/x86/store/references'])
+
+    env.Append(CCFLAGS='/FS /MP /GS /wd"4453" /wd"28204" /wd"4291" /Zc:wchar_t /Gm- /fp:precise /D "_UNICODE" /D "UNICODE" /D "WINAPI_FAMILY=WINAPI_FAMILY_APP" /errorReport:prompt /WX- /Zc:forScope /Gd /EHsc /nologo'.split())
+    env.Append(CXXFLAGS='/ZW /FS'.split())
+    env.Append(CCFLAGS=['/AI', vc_base_path + '\\vcpackages', '/AI', os.environ['WINDOWSSDKDIR'] + '\\References\\CommonConfiguration\\Neutral'])
+
+    env.Append(LINKFLAGS=['/MANIFEST:NO', '/NXCOMPAT', '/DYNAMICBASE', '/WINMD', '/APPCONTAINER', '/ERRORREPORT:PROMPT', '/NOLOGO', '/TLBID:1', '/NODEFAULTLIB:"kernel32.lib"', '/NODEFAULTLIB:"ole32.lib"'])
+
+    LIBS = [
+        'WindowsApp',
+        'mincore',
+    ]
+    env.Append(LINKFLAGS=[p + ".lib" for p in LIBS])
+
+    result_name += '.uwp.' + target_arch
+
 
 env.Append(CPPPATH=['.', env['headers_dir'], 'include', 'include/gen', 'include/core'])
 
