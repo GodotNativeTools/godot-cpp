@@ -25,7 +25,7 @@ PoolByteArray &PoolByteArray::operator=(const PoolByteArray &p_other) {
 }
 
 PoolByteArray::PoolByteArray(const Array &array) {
-	godot::api->godot_pool_byte_array_new_with_array(&_godot_array, (godot_array *)&array);
+	godot::api->godot_pool_byte_array_new_with_array(&_godot_array, reinterpret_cast<const godot_array *>(&array));
 }
 
 PoolByteArray::Read PoolByteArray::read() const {
@@ -99,7 +99,7 @@ PoolIntArray &PoolIntArray::operator=(const PoolIntArray &p_other) {
 }
 
 PoolIntArray::PoolIntArray(const Array &array) {
-	godot::api->godot_pool_int_array_new_with_array(&_godot_array, (godot_array *)&array);
+	godot::api->godot_pool_int_array_new_with_array(&_godot_array, reinterpret_cast<const godot_array *>(&array));
 }
 
 PoolIntArray::Read PoolIntArray::read() const {
@@ -185,7 +185,7 @@ PoolRealArray::Write PoolRealArray::write() {
 }
 
 PoolRealArray::PoolRealArray(const Array &array) {
-	godot::api->godot_pool_real_array_new_with_array(&_godot_array, (godot_array *)&array);
+	godot::api->godot_pool_real_array_new_with_array(&_godot_array, reinterpret_cast<const godot_array *>(&array));
 }
 
 void PoolRealArray::append(const real_t data) {
@@ -247,7 +247,7 @@ PoolStringArray &PoolStringArray::operator=(const PoolStringArray &p_other) {
 }
 
 PoolStringArray::PoolStringArray(const Array &array) {
-	godot::api->godot_pool_string_array_new_with_array(&_godot_array, (godot_array *)&array);
+	godot::api->godot_pool_string_array_new_with_array(&_godot_array, reinterpret_cast<const godot_array *>(&array));
 }
 
 PoolStringArray::Read PoolStringArray::read() const {
@@ -263,7 +263,7 @@ PoolStringArray::Write PoolStringArray::write() {
 }
 
 void PoolStringArray::append(const String &data) {
-	godot::api->godot_pool_string_array_append(&_godot_array, (godot_string *)&data);
+	godot::api->godot_pool_string_array_append(&_godot_array, reinterpret_cast<const godot_string *>(&data));
 }
 
 void PoolStringArray::append_array(const PoolStringArray &array) {
@@ -271,7 +271,7 @@ void PoolStringArray::append_array(const PoolStringArray &array) {
 }
 
 int PoolStringArray::insert(const int idx, const String &data) {
-	return godot::api->godot_pool_string_array_insert(&_godot_array, idx, (godot_string *)&data);
+	return godot::api->godot_pool_string_array_insert(&_godot_array, idx, reinterpret_cast<const godot_string *>(&data));
 }
 
 void PoolStringArray::invert() {
@@ -279,7 +279,7 @@ void PoolStringArray::invert() {
 }
 
 void PoolStringArray::push_back(const String &data) {
-	godot::api->godot_pool_string_array_push_back(&_godot_array, (godot_string *)&data);
+	godot::api->godot_pool_string_array_push_back(&_godot_array, reinterpret_cast<const godot_string *>(&data));
 }
 
 void PoolStringArray::remove(const int idx) {
@@ -291,13 +291,13 @@ void PoolStringArray::resize(const int size) {
 }
 
 void PoolStringArray::set(const int idx, const String &data) {
-	godot::api->godot_pool_string_array_set(&_godot_array, idx, (godot_string *)&data);
+	godot::api->godot_pool_string_array_set(&_godot_array, idx, reinterpret_cast<const godot_string *>(&data));
 }
 
 const String PoolStringArray::operator[](const int idx) {
 	String s;
 	godot_string str = godot::api->godot_pool_string_array_get(&_godot_array, idx);
-	godot::api->godot_string_new_copy((godot_string *)&s, &str);
+	godot::api->godot_string_new_copy(reinterpret_cast<godot_string *>(&s), &str);
 	godot::api->godot_string_destroy(&str);
 	return s;
 }
@@ -325,7 +325,7 @@ PoolVector2Array &PoolVector2Array::operator=(const PoolVector2Array &p_other) {
 }
 
 PoolVector2Array::PoolVector2Array(const Array &array) {
-	godot::api->godot_pool_vector2_array_new_with_array(&_godot_array, (godot_array *)&array);
+	godot::api->godot_pool_vector2_array_new_with_array(&_godot_array, reinterpret_cast<const godot_array *>(&array));
 }
 
 PoolVector2Array::Read PoolVector2Array::read() const {
@@ -341,7 +341,7 @@ PoolVector2Array::Write PoolVector2Array::write() {
 }
 
 void PoolVector2Array::append(const Vector2 &data) {
-	godot::api->godot_pool_vector2_array_append(&_godot_array, (godot_vector2 *)&data);
+	godot::api->godot_pool_vector2_array_append(&_godot_array, reinterpret_cast<const godot_vector2 *>(&data));
 }
 
 void PoolVector2Array::append_array(const PoolVector2Array &array) {
@@ -349,7 +349,7 @@ void PoolVector2Array::append_array(const PoolVector2Array &array) {
 }
 
 int PoolVector2Array::insert(const int idx, const Vector2 &data) {
-	return godot::api->godot_pool_vector2_array_insert(&_godot_array, idx, (godot_vector2 *)&data);
+	return godot::api->godot_pool_vector2_array_insert(&_godot_array, idx, reinterpret_cast<const godot_vector2 *>(&data));
 }
 
 void PoolVector2Array::invert() {
@@ -357,7 +357,7 @@ void PoolVector2Array::invert() {
 }
 
 void PoolVector2Array::push_back(const Vector2 &data) {
-	godot::api->godot_pool_vector2_array_push_back(&_godot_array, (godot_vector2 *)&data);
+	godot::api->godot_pool_vector2_array_push_back(&_godot_array, reinterpret_cast<const godot_vector2 *>(&data));
 }
 
 void PoolVector2Array::remove(const int idx) {
@@ -369,12 +369,12 @@ void PoolVector2Array::resize(const int size) {
 }
 
 void PoolVector2Array::set(const int idx, const Vector2 &data) {
-	godot::api->godot_pool_vector2_array_set(&_godot_array, idx, (godot_vector2 *)&data);
+	godot::api->godot_pool_vector2_array_set(&_godot_array, idx, reinterpret_cast<const godot_vector2 *>(&data));
 }
 
 const Vector2 PoolVector2Array::operator[](const int idx) {
 	Vector2 v;
-	*(godot_vector2 *)&v = godot::api->godot_pool_vector2_array_get(&_godot_array, idx);
+	*reinterpret_cast<godot_vector2 *>(&v) = godot::api->godot_pool_vector2_array_get(&_godot_array, idx);
 	return v;
 }
 
@@ -401,7 +401,7 @@ PoolVector3Array &PoolVector3Array::operator=(const PoolVector3Array &p_other) {
 }
 
 PoolVector3Array::PoolVector3Array(const Array &array) {
-	godot::api->godot_pool_vector3_array_new_with_array(&_godot_array, (godot_array *)&array);
+	godot::api->godot_pool_vector3_array_new_with_array(&_godot_array, reinterpret_cast<const godot_array *>(&array));
 }
 
 PoolVector3Array::Read PoolVector3Array::read() const {
@@ -417,7 +417,7 @@ PoolVector3Array::Write PoolVector3Array::write() {
 }
 
 void PoolVector3Array::append(const Vector3 &data) {
-	godot::api->godot_pool_vector3_array_append(&_godot_array, (godot_vector3 *)&data);
+	godot::api->godot_pool_vector3_array_append(&_godot_array, reinterpret_cast<const godot_vector3 *>(&data));
 }
 
 void PoolVector3Array::append_array(const PoolVector3Array &array) {
@@ -425,7 +425,7 @@ void PoolVector3Array::append_array(const PoolVector3Array &array) {
 }
 
 int PoolVector3Array::insert(const int idx, const Vector3 &data) {
-	return godot::api->godot_pool_vector3_array_insert(&_godot_array, idx, (godot_vector3 *)&data);
+	return godot::api->godot_pool_vector3_array_insert(&_godot_array, idx, reinterpret_cast<const godot_vector3 *>(&data));
 }
 
 void PoolVector3Array::invert() {
@@ -433,7 +433,7 @@ void PoolVector3Array::invert() {
 }
 
 void PoolVector3Array::push_back(const Vector3 &data) {
-	godot::api->godot_pool_vector3_array_push_back(&_godot_array, (godot_vector3 *)&data);
+	godot::api->godot_pool_vector3_array_push_back(&_godot_array, reinterpret_cast<const godot_vector3 *>(&data));
 }
 
 void PoolVector3Array::remove(const int idx) {
@@ -445,12 +445,12 @@ void PoolVector3Array::resize(const int size) {
 }
 
 void PoolVector3Array::set(const int idx, const Vector3 &data) {
-	godot::api->godot_pool_vector3_array_set(&_godot_array, idx, (godot_vector3 *)&data);
+	godot::api->godot_pool_vector3_array_set(&_godot_array, idx, reinterpret_cast<const godot_vector3 *>(&data));
 }
 
 const Vector3 PoolVector3Array::operator[](const int idx) {
 	Vector3 v;
-	*(godot_vector3 *)&v = godot::api->godot_pool_vector3_array_get(&_godot_array, idx);
+	*reinterpret_cast<godot_vector3 *>(&v) = godot::api->godot_pool_vector3_array_get(&_godot_array, idx);
 	return v;
 }
 
@@ -477,7 +477,7 @@ PoolColorArray &PoolColorArray::operator=(const PoolColorArray &p_other) {
 }
 
 PoolColorArray::PoolColorArray(const Array &array) {
-	godot::api->godot_pool_color_array_new_with_array(&_godot_array, (godot_array *)&array);
+	godot::api->godot_pool_color_array_new_with_array(&_godot_array, reinterpret_cast<const godot_array *>(&array));
 }
 
 PoolColorArray::Read PoolColorArray::read() const {
@@ -493,7 +493,7 @@ PoolColorArray::Write PoolColorArray::write() {
 }
 
 void PoolColorArray::append(const Color &data) {
-	godot::api->godot_pool_color_array_append(&_godot_array, (godot_color *)&data);
+	godot::api->godot_pool_color_array_append(&_godot_array, reinterpret_cast<const godot_color *>(&data));
 }
 
 void PoolColorArray::append_array(const PoolColorArray &array) {
@@ -501,7 +501,7 @@ void PoolColorArray::append_array(const PoolColorArray &array) {
 }
 
 int PoolColorArray::insert(const int idx, const Color &data) {
-	return godot::api->godot_pool_color_array_insert(&_godot_array, idx, (godot_color *)&data);
+	return godot::api->godot_pool_color_array_insert(&_godot_array, idx, reinterpret_cast<const godot_color *>(&data));
 }
 
 void PoolColorArray::invert() {
@@ -509,7 +509,7 @@ void PoolColorArray::invert() {
 }
 
 void PoolColorArray::push_back(const Color &data) {
-	godot::api->godot_pool_color_array_push_back(&_godot_array, (godot_color *)&data);
+	godot::api->godot_pool_color_array_push_back(&_godot_array, reinterpret_cast<const godot_color *>(&data));
 }
 
 void PoolColorArray::remove(const int idx) {
@@ -521,12 +521,12 @@ void PoolColorArray::resize(const int size) {
 }
 
 void PoolColorArray::set(const int idx, const Color &data) {
-	godot::api->godot_pool_color_array_set(&_godot_array, idx, (godot_color *)&data);
+	godot::api->godot_pool_color_array_set(&_godot_array, idx, reinterpret_cast<const godot_color *>(&data));
 }
 
 const Color PoolColorArray::operator[](const int idx) {
 	Color v;
-	*(godot_color *)&v = godot::api->godot_pool_color_array_get(&_godot_array, idx);
+	*reinterpret_cast<godot_color *>(&v) = godot::api->godot_pool_color_array_get(&_godot_array, idx);
 	return v;
 }
 

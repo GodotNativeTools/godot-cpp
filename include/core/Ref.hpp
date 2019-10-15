@@ -80,7 +80,7 @@ public:
 	operator Variant() const {
 		// Note: the C API handles the cases where the object is a Reference,
 		// so the Variant will be correctly constructed with a RefPtr engine-side
-		return Variant((Object *)reference);
+		return Variant(static_cast<Object *>(reference));
 	}
 
 	void operator=(const Ref &p_from) {
@@ -99,7 +99,7 @@ public:
 		}
 		Ref r;
 		//r.reference = Object::cast_to<T>(refb);
-		r.reference = (T *)refb;
+		r.reference = static_cast<T *>(refb);
 		ref(r);
 		r.reference = nullptr;
 	}
@@ -107,7 +107,7 @@ public:
 	void operator=(const Variant &p_variant) {
 
 		// TODO We need a safe cast
-		Reference *refb = (Reference *)T::___get_from_variant(p_variant);
+		Reference *refb = static_cast<Reference *>(T::___get_from_variant(p_variant));
 		if (!refb) {
 			unref();
 			return;
@@ -115,7 +115,7 @@ public:
 		Ref r;
 		// TODO We need a safe cast
 		//r.reference = Object::cast_to<T>(refb);
-		r.reference = (T *)refb;
+		r.reference = static_cast<T *>(refb);
 		ref(r);
 		r.reference = nullptr;
 	}
@@ -139,7 +139,7 @@ public:
 		Ref r;
 		// TODO We need a safe cast
 		//r.reference = Object::cast_to<T>(refb);
-		r.reference = (T *)refb;
+		r.reference = static_cast<T *>(refb);
 		ref(r);
 		r.reference = nullptr;
 	}
@@ -156,7 +156,7 @@ public:
 
 		reference = nullptr;
 		// TODO We need a safe cast
-		Reference *refb = (Reference *)T::___get_from_variant(p_variant);
+		Reference *refb = static_cast<Reference *>(T::___get_from_variant(p_variant));
 		if (!refb) {
 			unref();
 			return;
@@ -164,7 +164,7 @@ public:
 		Ref r;
 		// TODO We need a safe cast
 		//r.reference = Object::cast_to<T>(refb);
-		r.reference = (T *)refb;
+		r.reference = static_cast<T *>(refb);
 		ref(r);
 		r.reference = nullptr;
 	}
@@ -204,7 +204,7 @@ public:
 	// without adding to the refcount.
 	inline static Ref<T> __internal_constructor(Object *obj) {
 		Ref<T> r;
-		r.reference = (T *)obj;
+		r.reference = static_cast<T *>(obj);
 		return r;
 	}
 };

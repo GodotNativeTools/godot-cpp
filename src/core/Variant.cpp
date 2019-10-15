@@ -34,7 +34,7 @@ Variant::Variant(unsigned int p_int) {
 
 Variant::Variant(signed short p_short) // real one
 {
-	godot::api->godot_variant_new_int(&_godot_variant, (int)p_short);
+	godot::api->godot_variant_new_int(&_godot_variant, static_cast<int>(p_short));
 }
 
 Variant::Variant(int64_t p_char) // real one
@@ -55,65 +55,65 @@ Variant::Variant(double p_double) {
 }
 
 Variant::Variant(const String &p_string) {
-	godot::api->godot_variant_new_string(&_godot_variant, (godot_string *)&p_string);
+	godot::api->godot_variant_new_string(&_godot_variant, reinterpret_cast<const godot_string *>(&p_string));
 }
 
 Variant::Variant(const char *const p_cstring) {
 	String s = String(p_cstring);
-	godot::api->godot_variant_new_string(&_godot_variant, (godot_string *)&s);
+	godot::api->godot_variant_new_string(&_godot_variant, reinterpret_cast<const godot_string *>(&s));
 }
 
 Variant::Variant(const wchar_t *p_wstring) {
 	String s = p_wstring;
-	godot::api->godot_variant_new_string(&_godot_variant, (godot_string *)&s);
+	godot::api->godot_variant_new_string(&_godot_variant, reinterpret_cast<const godot_string *>(&s));
 }
 
 Variant::Variant(const Vector2 &p_vector2) {
-	godot::api->godot_variant_new_vector2(&_godot_variant, (godot_vector2 *)&p_vector2);
+	godot::api->godot_variant_new_vector2(&_godot_variant, reinterpret_cast<const godot_vector2 *>(&p_vector2));
 }
 
 Variant::Variant(const Rect2 &p_rect2) {
-	godot::api->godot_variant_new_rect2(&_godot_variant, (godot_rect2 *)&p_rect2);
+	godot::api->godot_variant_new_rect2(&_godot_variant, reinterpret_cast<const godot_rect2 *>(&p_rect2));
 }
 
 Variant::Variant(const Vector3 &p_vector3) {
-	godot::api->godot_variant_new_vector3(&_godot_variant, (godot_vector3 *)&p_vector3);
+	godot::api->godot_variant_new_vector3(&_godot_variant, reinterpret_cast<const godot_vector3 *>(&p_vector3));
 }
 
 Variant::Variant(const Plane &p_plane) {
-	godot::api->godot_variant_new_plane(&_godot_variant, (godot_plane *)&p_plane);
+	godot::api->godot_variant_new_plane(&_godot_variant, reinterpret_cast<const godot_plane *>(&p_plane));
 }
 
 Variant::Variant(const AABB &p_aabb) {
-	godot::api->godot_variant_new_aabb(&_godot_variant, (godot_aabb *)&p_aabb);
+	godot::api->godot_variant_new_aabb(&_godot_variant, reinterpret_cast<const godot_aabb *>(&p_aabb));
 }
 
 Variant::Variant(const Quat &p_quat) {
-	godot::api->godot_variant_new_quat(&_godot_variant, (godot_quat *)&p_quat);
+	godot::api->godot_variant_new_quat(&_godot_variant, reinterpret_cast<const godot_quat *>(&p_quat));
 }
 
 Variant::Variant(const Basis &p_transform) {
-	godot::api->godot_variant_new_basis(&_godot_variant, (godot_basis *)&p_transform);
+	godot::api->godot_variant_new_basis(&_godot_variant, reinterpret_cast<const godot_basis *>(&p_transform));
 }
 
 Variant::Variant(const Transform2D &p_transform) {
-	godot::api->godot_variant_new_transform2d(&_godot_variant, (godot_transform2d *)&p_transform);
+	godot::api->godot_variant_new_transform2d(&_godot_variant, reinterpret_cast<const godot_transform2d *>(&p_transform));
 }
 
 Variant::Variant(const Transform &p_transform) {
-	godot::api->godot_variant_new_transform(&_godot_variant, (godot_transform *)&p_transform);
+	godot::api->godot_variant_new_transform(&_godot_variant, reinterpret_cast<const godot_transform *>(&p_transform));
 }
 
 Variant::Variant(const Color &p_color) {
-	godot::api->godot_variant_new_color(&_godot_variant, (godot_color *)&p_color);
+	godot::api->godot_variant_new_color(&_godot_variant, reinterpret_cast<const godot_color *>(&p_color));
 }
 
 Variant::Variant(const NodePath &p_path) {
-	godot::api->godot_variant_new_node_path(&_godot_variant, (godot_node_path *)&p_path);
+	godot::api->godot_variant_new_node_path(&_godot_variant, reinterpret_cast<const godot_node_path *>(&p_path));
 }
 
 Variant::Variant(const RID &p_rid) {
-	godot::api->godot_variant_new_rid(&_godot_variant, (godot_rid *)&p_rid);
+	godot::api->godot_variant_new_rid(&_godot_variant, reinterpret_cast<const godot_rid *>(&p_rid));
 }
 
 Variant::Variant(const Object *p_object) {
@@ -124,39 +124,39 @@ Variant::Variant(const Object *p_object) {
 }
 
 Variant::Variant(const Dictionary &p_dictionary) {
-	godot::api->godot_variant_new_dictionary(&_godot_variant, (godot_dictionary *)&p_dictionary);
+	godot::api->godot_variant_new_dictionary(&_godot_variant, reinterpret_cast<const godot_dictionary *>(&p_dictionary));
 }
 
 Variant::Variant(const Array &p_array) {
-	godot::api->godot_variant_new_array(&_godot_variant, (godot_array *)&p_array);
+	godot::api->godot_variant_new_array(&_godot_variant, reinterpret_cast<const godot_array *>(&p_array));
 }
 
 Variant::Variant(const PoolByteArray &p_raw_array) {
-	godot::api->godot_variant_new_pool_byte_array(&_godot_variant, (godot_pool_byte_array *)&p_raw_array);
+	godot::api->godot_variant_new_pool_byte_array(&_godot_variant, reinterpret_cast<const godot_pool_byte_array *>(&p_raw_array));
 }
 
 Variant::Variant(const PoolIntArray &p_int_array) {
-	godot::api->godot_variant_new_pool_int_array(&_godot_variant, (godot_pool_int_array *)&p_int_array);
+	godot::api->godot_variant_new_pool_int_array(&_godot_variant, reinterpret_cast<const godot_pool_int_array *>(&p_int_array));
 }
 
 Variant::Variant(const PoolRealArray &p_real_array) {
-	godot::api->godot_variant_new_pool_real_array(&_godot_variant, (godot_pool_real_array *)&p_real_array);
+	godot::api->godot_variant_new_pool_real_array(&_godot_variant, reinterpret_cast<const godot_pool_real_array *>(&p_real_array));
 }
 
 Variant::Variant(const PoolStringArray &p_string_array) {
-	godot::api->godot_variant_new_pool_string_array(&_godot_variant, (godot_pool_string_array *)&p_string_array);
+	godot::api->godot_variant_new_pool_string_array(&_godot_variant, reinterpret_cast<const godot_pool_string_array *>(&p_string_array));
 }
 
 Variant::Variant(const PoolVector2Array &p_vector2_array) {
-	godot::api->godot_variant_new_pool_vector2_array(&_godot_variant, (godot_pool_vector2_array *)&p_vector2_array);
+	godot::api->godot_variant_new_pool_vector2_array(&_godot_variant, reinterpret_cast<const godot_pool_vector2_array *>(&p_vector2_array));
 }
 
 Variant::Variant(const PoolVector3Array &p_vector3_array) {
-	godot::api->godot_variant_new_pool_vector3_array(&_godot_variant, (godot_pool_vector3_array *)&p_vector3_array);
+	godot::api->godot_variant_new_pool_vector3_array(&_godot_variant, reinterpret_cast<const godot_pool_vector3_array *>(&p_vector3_array));
 }
 
 Variant::Variant(const PoolColorArray &p_color_array) {
-	godot::api->godot_variant_new_pool_color_array(&_godot_variant, (godot_pool_color_array *)&p_color_array);
+	godot::api->godot_variant_new_pool_color_array(&_godot_variant, reinterpret_cast<const godot_pool_color_array *>(&p_color_array));
 }
 
 Variant &Variant::operator=(const Variant &v) {
@@ -206,112 +206,112 @@ Variant::operator double() const {
 }
 Variant::operator String() const {
 	godot_string s = godot::api->godot_variant_as_string(&_godot_variant);
-	return *(String *)&s;
+	return *reinterpret_cast<String *>(&s);
 }
 Variant::operator Vector2() const {
 	godot_vector2 s = godot::api->godot_variant_as_vector2(&_godot_variant);
-	return *(Vector2 *)&s;
+	return *reinterpret_cast<Vector2 *>(&s);
 }
 Variant::operator Rect2() const {
 	godot_rect2 s = godot::api->godot_variant_as_rect2(&_godot_variant);
-	return *(Rect2 *)&s;
+	return *reinterpret_cast<Rect2 *>(&s);
 }
 Variant::operator Vector3() const {
 	godot_vector3 s = godot::api->godot_variant_as_vector3(&_godot_variant);
-	return *(Vector3 *)&s;
+	return *reinterpret_cast<Vector3 *>(&s);
 }
 Variant::operator Plane() const {
 	godot_plane s = godot::api->godot_variant_as_plane(&_godot_variant);
-	return *(Plane *)&s;
+	return *reinterpret_cast<Plane *>(&s);
 }
 Variant::operator AABB() const {
 	godot_aabb s = godot::api->godot_variant_as_aabb(&_godot_variant);
-	return *(AABB *)&s;
+	return *reinterpret_cast<AABB *>(&s);
 }
 Variant::operator Quat() const {
 	godot_quat s = godot::api->godot_variant_as_quat(&_godot_variant);
-	return *(Quat *)&s;
+	return *reinterpret_cast<Quat *>(&s);
 }
 Variant::operator Basis() const {
 	godot_basis s = godot::api->godot_variant_as_basis(&_godot_variant);
-	return *(Basis *)&s;
+	return *reinterpret_cast<Basis *>(&s);
 }
 Variant::operator Transform() const {
 	godot_transform s = godot::api->godot_variant_as_transform(&_godot_variant);
-	return *(Transform *)&s;
+	return *reinterpret_cast<Transform *>(&s);
 }
 Variant::operator Transform2D() const {
 	godot_transform2d s = godot::api->godot_variant_as_transform2d(&_godot_variant);
-	return *(Transform2D *)&s;
+	return *reinterpret_cast<Transform2D *>(&s);
 }
 
 Variant::operator Color() const {
 	godot_color s = godot::api->godot_variant_as_color(&_godot_variant);
-	return *(Color *)&s;
+	return *reinterpret_cast<Color *>(&s);
 }
 Variant::operator NodePath() const {
 	godot_node_path s = godot::api->godot_variant_as_node_path(&_godot_variant);
-	return *(NodePath *)&s;
+	return *reinterpret_cast<NodePath *>(&s);
 }
 Variant::operator RID() const {
 	godot_rid s = godot::api->godot_variant_as_rid(&_godot_variant);
-	return *(RID *)&s;
+	return *reinterpret_cast<RID *>(&s);
 }
 
 Variant::operator Dictionary() const {
 	godot_dictionary d = godot::api->godot_variant_as_dictionary(&_godot_variant);
-	return *(Dictionary *)&d;
+	return *reinterpret_cast<Dictionary *>(&d);
 }
 
 Variant::operator Array() const {
 	godot_array s = godot::api->godot_variant_as_array(&_godot_variant);
-	return *(Array *)&s;
+	return *reinterpret_cast<Array *>(&s);
 }
 
 Variant::operator PoolByteArray() const {
 	godot_pool_byte_array s = godot::api->godot_variant_as_pool_byte_array(&_godot_variant);
-	return *(PoolByteArray *)&s;
+	return *reinterpret_cast<PoolByteArray *>(&s);
 }
 Variant::operator PoolIntArray() const {
 	godot_pool_int_array s = godot::api->godot_variant_as_pool_int_array(&_godot_variant);
-	return *(PoolIntArray *)&s;
+	return *reinterpret_cast<PoolIntArray *>(&s);
 }
 Variant::operator PoolRealArray() const {
 	godot_pool_real_array s = godot::api->godot_variant_as_pool_real_array(&_godot_variant);
-	return *(PoolRealArray *)&s;
+	return *reinterpret_cast<PoolRealArray *>(&s);
 }
 Variant::operator PoolStringArray() const {
 	godot_pool_string_array s = godot::api->godot_variant_as_pool_string_array(&_godot_variant);
-	return *(PoolStringArray *)&s;
+	return *reinterpret_cast<PoolStringArray *>(&s);
 }
 Variant::operator PoolVector2Array() const {
 	godot_pool_vector2_array s = godot::api->godot_variant_as_pool_vector2_array(&_godot_variant);
-	return *(PoolVector2Array *)&s;
+	return *reinterpret_cast<PoolVector2Array *>(&s);
 }
 Variant::operator PoolVector3Array() const {
 	godot_pool_vector3_array s = godot::api->godot_variant_as_pool_vector3_array(&_godot_variant);
-	return *(PoolVector3Array *)&s;
+	return *reinterpret_cast<PoolVector3Array *>(&s);
 }
 Variant::operator PoolColorArray() const {
 	godot_pool_color_array s = godot::api->godot_variant_as_pool_color_array(&_godot_variant);
-	return *(PoolColorArray *)&s;
+	return *reinterpret_cast<PoolColorArray *>(&s);
 }
 Variant::operator godot_object *() const {
 	return godot::api->godot_variant_as_object(&_godot_variant);
 }
 
 Variant::Type Variant::get_type() const {
-	return (Type)godot::api->godot_variant_get_type(&_godot_variant);
+	return static_cast<Type>(godot::api->godot_variant_get_type(&_godot_variant));
 }
 
 Variant Variant::call(const String &method, const Variant **args, const int arg_count) {
 	Variant v;
-	*(godot_variant *)&v = godot::api->godot_variant_call(&_godot_variant, (godot_string *)&method, (const godot_variant **)args, arg_count, nullptr);
+	*reinterpret_cast<godot_variant *>(&v) = godot::api->godot_variant_call(&_godot_variant, reinterpret_cast<const godot_string *>(&method), reinterpret_cast<const godot_variant **>(args), arg_count, nullptr);
 	return v;
 }
 
 bool Variant::has_method(const String &method) {
-	return godot::api->godot_variant_has_method(&_godot_variant, (godot_string *)&method);
+	return godot::api->godot_variant_has_method(&_godot_variant, reinterpret_cast<const godot_string *>(&method));
 }
 
 bool Variant::operator==(const Variant &b) const {

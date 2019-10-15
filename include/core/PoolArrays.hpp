@@ -329,7 +329,7 @@ public:
 		}
 
 		inline const String *ptr() const {
-			return (const String *)godot::api->godot_pool_string_array_read_access_ptr(_read_access);
+			return reinterpret_cast<const String *>(godot::api->godot_pool_string_array_read_access_ptr(_read_access));
 		}
 
 		inline const String &operator[](int p_idx) const {
@@ -359,7 +359,7 @@ public:
 		}
 
 		inline String *ptr() const {
-			return (String *)godot::api->godot_pool_string_array_write_access_ptr(_write_access);
+			return reinterpret_cast<String *>(godot::api->godot_pool_string_array_write_access_ptr(_write_access));
 		}
 
 		inline String &operator[](int p_idx) const {
@@ -426,7 +426,7 @@ public:
 		}
 
 		inline const Vector2 *ptr() const {
-			return (const Vector2 *)godot::api->godot_pool_vector2_array_read_access_ptr(_read_access);
+			return reinterpret_cast<const Vector2 *>(godot::api->godot_pool_vector2_array_read_access_ptr(_read_access));
 		}
 
 		inline const Vector2 &operator[](int p_idx) const {
@@ -456,7 +456,7 @@ public:
 		}
 
 		inline Vector2 *ptr() const {
-			return (Vector2 *)godot::api->godot_pool_vector2_array_write_access_ptr(_write_access);
+			return reinterpret_cast<Vector2 *>(godot::api->godot_pool_vector2_array_write_access_ptr(_write_access));
 		}
 
 		inline Vector2 &operator[](int p_idx) const {
@@ -523,7 +523,7 @@ public:
 		}
 
 		inline const Vector3 *ptr() const {
-			return (const Vector3 *)godot::api->godot_pool_vector3_array_read_access_ptr(_read_access);
+			return reinterpret_cast<const Vector3 *>(godot::api->godot_pool_vector3_array_read_access_ptr(_read_access));
 		}
 
 		inline const Vector3 &operator[](int p_idx) const {
@@ -553,7 +553,7 @@ public:
 		}
 
 		inline Vector3 *ptr() const {
-			return (Vector3 *)godot::api->godot_pool_vector3_array_write_access_ptr(_write_access);
+			return reinterpret_cast<Vector3 *>(godot::api->godot_pool_vector3_array_write_access_ptr(_write_access));
 		}
 
 		inline Vector3 &operator[](int p_idx) const {
@@ -620,7 +620,7 @@ public:
 		}
 
 		inline const Color *ptr() const {
-			return (const Color *)godot::api->godot_pool_color_array_read_access_ptr(_read_access);
+			return reinterpret_cast<const Color *>(godot::api->godot_pool_color_array_read_access_ptr(_read_access));
 		}
 
 		inline const Color &operator[](int p_idx) const {
@@ -650,7 +650,7 @@ public:
 		}
 
 		inline Color *ptr() const {
-			return (Color *)godot::api->godot_pool_color_array_write_access_ptr(_write_access);
+			return reinterpret_cast<Color *>(godot::api->godot_pool_color_array_write_access_ptr(_write_access));
 		}
 
 		inline Color &operator[](int p_idx) const {

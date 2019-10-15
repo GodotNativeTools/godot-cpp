@@ -103,7 +103,7 @@ wchar_t &String::operator[](const int idx) {
 }
 
 wchar_t String::operator[](const int idx) const {
-	return *godot::api->godot_string_operator_index((godot_string *)&_godot_string, idx);
+	return *godot::api->godot_string_operator_index(const_cast<godot_string *>(&_godot_string), idx);
 }
 
 int String::length() const {
@@ -169,7 +169,7 @@ char *String::alloc_c_string() const {
 
 	int length = godot::api->godot_char_string_length(&contents);
 
-	char *result = (char *)godot::api->godot_alloc(length + 1);
+	char *result = static_cast<char *>(godot::api->godot_alloc(length + 1));
 
 	if (result) {
 		memcpy(result, godot::api->godot_char_string_get_data(&contents), length + 1);
@@ -219,7 +219,7 @@ bool String::begins_with_char_array(const char *p_char_array) const {
 PoolStringArray String::bigrams() const {
 	godot_array arr = godot::api->godot_string_bigrams(&_godot_string);
 
-	return *(Array *)&arr;
+	return *reinterpret_cast<Array *>(&arr);
 }
 
 String String::c_escape() const {
@@ -269,7 +269,7 @@ int String::findn(String p_what, int p_from) const {
 
 String String::format(Variant values) const {
 	String new_string;
-	new_string._godot_string = godot::api->godot_string_format(&_godot_string, (godot_variant *)&values);
+	new_string._godot_string = godot::api->godot_string_format(&_godot_string, reinterpret_cast<godot_variant *>(&values));
 
 	return new_string;
 }
@@ -277,7 +277,7 @@ String String::format(Variant values) const {
 String String::format(Variant values, String placeholder) const {
 	String new_string;
 	godot_char_string contents = godot::api->godot_string_utf8(&placeholder._godot_string);
-	new_string._godot_string = godot::api->godot_string_format_with_custom_placeholder(&_godot_string, (godot_variant *)&values, godot::api->godot_char_string_get_data(&contents));
+	new_string._godot_string = godot::api->godot_string_format_with_custom_placeholder(&_godot_string, reinterpret_cast<godot_variant *>(&values), godot::api->godot_char_string_get_data(&contents));
 	godot::api->godot_char_string_destroy(&contents);
 
 	return new_string;
@@ -292,17 +292,17 @@ String String::get_base_dir() const {
 
 String String::get_basename() const {
 	godot_string new_string = godot::api->godot_string_get_basename(&_godot_string);
-	return *(String *)&new_string;
+	return *reinterpret_cast<String *>(&new_string);
 }
 
 String String::get_extension() const {
 	godot_string new_string = godot::api->godot_string_get_extension(&_godot_string);
-	return *(String *)&new_string;
+	return *reinterpret_cast<String *>(&new_string);
 }
 
 String String::get_file() const {
 	godot_string new_string = godot::api->godot_string_get_file(&_godot_string);
-	return *(String *)&new_string;
+	return *reinterpret_cast<String *>(&new_string);
 }
 
 int String::hash() const {
@@ -380,7 +380,7 @@ bool String::matchn(String expr) const {
 
 PoolByteArray String::md5_buffer() const {
 	godot_pool_byte_array arr = godot::api->godot_string_md5_buffer(&_godot_string);
-	return *(PoolByteArray *)&arr;
+	return *reinterpret_cast<PoolByteArray *>(&arr);
 }
 
 String String::md5_text() const {
@@ -461,7 +461,7 @@ String String::right(int position) const {
 PoolByteArray String::sha256_buffer() const {
 	godot_pool_byte_array arr = godot::api->godot_string_sha256_buffer(&_godot_string);
 
-	return *(PoolByteArray *)&arr;
+	return *reinterpret_cast<PoolByteArray *>(&arr);
 }
 
 String String::sha256_text() const {
@@ -478,19 +478,19 @@ float String::similarity(String text) const {
 PoolStringArray String::split(String divisor, bool allow_empty) const {
 	godot_array arr = godot::api->godot_string_split(&_godot_string, &divisor._godot_string);
 
-	return *(Array *)&arr;
+	return *reinterpret_cast<Array *>(&arr);
 }
 
 PoolIntArray String::split_ints(String divisor, bool allow_empty) const {
 	godot_array arr = godot::api->godot_string_split_floats(&_godot_string, &divisor._godot_string);
 
-	return *(Array *)&arr;
+	return *reinterpret_cast<Array *>(&arr);
 }
 
 PoolRealArray String::split_floats(String divisor, bool allow_empty) const {
 	godot_array arr = godot::api->godot_string_split_floats(&_godot_string, &divisor._godot_string);
 
-	return *(Array *)&arr;
+	return *reinterpret_cast<Array *>(&arr);
 }
 
 String String::strip_edges(bool left, bool right) const {
@@ -564,7 +564,7 @@ String String::dedent() const {
 PoolStringArray String::rsplit(const String &divisor, const bool allow_empty,
 		const int maxsplit) const {
 	godot_pool_string_array arr = godot::core_1_1_api->godot_string_rsplit(&_godot_string, &divisor._godot_string, allow_empty, maxsplit);
-	return *(PoolStringArray *)&arr;
+	return *reinterpret_cast<PoolStringArray *>(&arr);
 }
 
 String String::rstrip(const String &chars) const {

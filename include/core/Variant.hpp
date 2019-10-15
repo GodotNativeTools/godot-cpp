@@ -128,13 +128,13 @@ public:
 	Variant(signed short p_short);
 
 	inline Variant(unsigned short p_short) :
-			Variant((unsigned int)p_short) {}
+			Variant(static_cast<unsigned int>(p_short)) {}
 
 	inline Variant(signed char p_char) :
-			Variant((signed int)p_char) {}
+			Variant(static_cast<signed int>(p_char)) {}
 
 	inline Variant(unsigned char p_char) :
-			Variant((unsigned int)p_char) {}
+			Variant(static_cast<unsigned int>(p_char)) {}
 	Variant(int64_t p_char);
 
 	Variant(uint64_t p_char);
@@ -226,7 +226,10 @@ public:
 	operator NodePath() const;
 	operator RID() const;
 	operator godot_object *() const;
-	template <typename T> operator T*() const { return static_cast<T*>(T::___get_from_variant(*this)); }
+	template <typename T>
+	operator T *() const {
+		return static_cast<T *>(T::___get_from_variant(*this));
+	}
 
 	operator Dictionary() const;
 	operator Array() const;

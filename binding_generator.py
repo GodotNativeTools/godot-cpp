@@ -164,9 +164,9 @@ def generate_class_header(used_classes, c):
         # godot::api->godot_global_get_singleton((char *) \"" + strip_name(c["name"]) + "\");"
 
     # ___get_class_name
-    source.append("\tstatic inline const char *___get_class_name() { return (const char *) \"" + strip_name(c["name"]) + "\"; }")
+    source.append("\tstatic inline const char *___get_class_name() { return static_cast<const char *>(\"" + strip_name(c["name"]) + "\"); }")
 
-    source.append("\tstatic inline Object *___get_from_variant(Variant a) { godot_object *o = (godot_object*) a; return (o) ? (Object *) godot::nativescript_1_1_api->godot_nativescript_get_instance_binding_data(godot::_RegisterState::language_index, o) : nullptr; }")
+    source.append("\tstatic inline Object *___get_from_variant(Variant a) { godot_object *o = static_cast<godot_object*>(a); return (o) ? static_cast<Object *>(godot::nativescript_1_1_api->godot_nativescript_get_instance_binding_data(godot::_RegisterState::language_index, o)) : nullptr; }")
 
     enum_values = []
 
@@ -340,7 +340,7 @@ def generate_class_implementation(icalls, used_classes, c):
 
         # FIXME Test if inlining has a huge impact on binary size
         source.append(class_name + "::" + class_name + "() {")
-        source.append("\t_owner = godot::api->godot_global_get_singleton((char *) \"" + strip_name(c["name"]) + "\");")
+        source.append("\t_owner = godot::api->godot_global_get_singleton( const_cast<char *>(\"" + strip_name(c["name"]) + "\"));")
         source.append("}")
 
         source.append("")
@@ -361,7 +361,7 @@ def generate_class_implementation(icalls, used_classes, c):
     if c["instanciable"]:
         source.append(class_name + " *" + strip_name(c["name"]) + "::_new()")
         source.append("{")
-        source.append("\treturn (" + class_name + " *) godot::nativescript_1_1_api->godot_nativescript_get_instance_binding_data(godot::_RegisterState::language_index, godot::api->godot_get_class_constructor((char *)\"" + c["name"] + "\")());")
+        source.append("\treturn static_cast<" + class_name + " *>(godot::nativescript_1_1_api->godot_nativescript_get_instance_binding_data(godot::_RegisterState::language_index, godot::api->godot_get_class_constructor(static_cast<const char *>(\"" + c["name"] + "\"))()));")
         source.append("}")
 
     for method in c["methods"]:
@@ -400,11 +400,11 @@ def generate_class_implementation(icalls, used_classes, c):
         if method["return_type"] != "void":
             if is_class_type(method["return_type"]):
                 if is_enum(method["return_type"]):
-                    return_statement += "return (" + remove_enum_prefix(method["return_type"]) + ") "
+                    return_statement += "return static_cast<" + remove_enum_prefix(method["return_type"]) + ">( "
                 elif is_reference_type(method["return_type"]):
                     return_statement += "return Ref<" + strip_name(method["return_type"]) + ">::__internal_constructor(";
                 else:
-                    return_statement += "return " + ("(" + strip_name(method["return_type"]) + " *) " if is_class_type(method["return_type"]) else "")
+                    return_statement += "return " + ("static_cast<" + strip_name(method["return_type"]) + " *>( " if is_class_type(method["return_type"]) else "")
             else:
                 return_statement += "return "
 
@@ -423,7 +423,7 @@ def generate_class_implementation(icalls, used_classes, c):
                 source.append("\tVariant __given_args[" + str(len(method["arguments"])) + "];")
 
             for i, argument in enumerate(method["arguments"]):
-                source.append("\tgodot::api->godot_variant_new_nil((godot_variant *) &__given_args[" + str(i) + "]);")
+                source.append("\tgodot::api->godot_variant_new_nil(reinterpret_cast<godot_variant *>(&__given_args[" + str(i) + "]));")
 
             source.append("")
 
@@ -439,24 +439,24 @@ def generate_class_implementation(icalls, used_classes, c):
             else:
                 size = "(" + str(len(method["arguments"])) + ")"
 
-            source.append("\tgodot_variant **__args = (godot_variant **) alloca(sizeof(godot_variant *) * " + size + ");")
+            source.append("\tgodot_variant **__args = static_cast<godot_variant **>(alloca(sizeof(godot_variant *) * " + size + "));")
 
             source.append("")
 
             for i, argument in enumerate(method["arguments"]):
-                source.append("\t__args[" + str(i) + "] = (godot_variant *) &__given_args[" + str(i) + "];")
+                source.append("\t__args[" + str(i) + "] = reinterpret_cast<godot_variant *>(&__given_args[" + str(i) + "]);")
 
             source.append("")
 
             if method["has_varargs"]:
                 source.append("\tfor (int i = 0; i < __var_args.size(); i++) {")
-                source.append("\t\t__args[i + " + str(len(method["arguments"])) + "] = (godot_variant *) &((Array &) __var_args)[i];")
+                source.append("\t\t__args[i + " + str(len(method["arguments"])) + "] = reinterpret_cast<godot_variant *>(&const_cast<Array &>(__var_args)[i]);")
                 source.append("\t}")
 
             source.append("")
 
             source.append("\tVariant __result;")
-            source.append("\t*(godot_variant *) &__result = godot::api->godot_method_bind_call(___mb.mb_" + method["name"] + ", ((const Object *) " + core_object_name + ")->_owner, (const godot_variant **) __args, " + size + ", nullptr);")
+            source.append("\t*reinterpret_cast<godot_variant *>(&__result) = godot::api->godot_method_bind_call(___mb.mb_" + method["name"] + ", static_cast<const Object *>(" + core_object_name + ")->_owner, const_cast<const godot_variant **>(__args), " + size + ", nullptr);")
 
             source.append("")
 
@@ -469,7 +469,7 @@ def generate_class_implementation(icalls, used_classes, c):
 
 
             for i, argument in enumerate(method["arguments"]):
-                source.append("\tgodot::api->godot_variant_destroy((godot_variant *) &__given_args[" + str(i) + "]);")
+                source.append("\tgodot::api->godot_variant_destroy(reinterpret_cast<godot_variant *>(&__given_args[" + str(i) + "]));")
 
             source.append("")
 
@@ -479,7 +479,7 @@ def generate_class_implementation(icalls, used_classes, c):
                     if is_reference_type(method["return_type"]):
                         cast += "Ref<" + strip_name(method["return_type"]) + ">::__internal_constructor(__result);"
                     else:
-                        cast += "(" + strip_name(method["return_type"]) + " *) " + strip_name(method["return_type"] + "::___get_from_variant(") + "__result);"
+                        cast += "static_cast<" + strip_name(method["return_type"]) + " *>(" + strip_name(method["return_type"] + "::___get_from_variant(") + "__result));"
                 else:
                     cast += "__result;"
                 source.append("\treturn " + cast)
@@ -500,14 +500,14 @@ def generate_class_implementation(icalls, used_classes, c):
 
             icall_name = get_icall_name(icall_sig)
 
-            return_statement += icall_name + "(___mb.mb_" + method["name"] + ", (const Object *) " + core_object_name
+            return_statement += icall_name + "(___mb.mb_" + method["name"] + ", static_cast<const Object *> (" + core_object_name + ")"
 
             for arg in method["arguments"]:
                 return_statement += ", " + escape_cpp(arg["name"]) + (".ptr()" if is_reference_type(arg["type"]) else "")
 
             return_statement += ")"
 
-            source.append("\t" + return_statement + (")" if is_reference_type(method["return_type"]) else "") + ";")
+            source.append("\t" + return_statement + (")" if is_class_type(method["return_type"]) else "") + ";")
 
         source.append("}")
         source.append("")
@@ -584,9 +584,9 @@ def generate_icall_header(icalls):
 
             wrapped_argument = "\t\t"
             if is_primitive(arg) or is_core_type(arg):
-                wrapped_argument += "(void *) &arg" + str(i)
+                wrapped_argument += "static_cast<const void *> (&arg" + str(i) + ")"
             else:
-                wrapped_argument += "(void *) (arg" + str(i) + ") ? arg" + str(i) + "->_owner : nullptr"
+                wrapped_argument += "static_cast<const void *> (arg" + str(i) + ") ? arg" + str(i) + "->_owner : nullptr"
 
             wrapped_argument += ","
             source.append(wrapped_argument)
@@ -599,10 +599,10 @@ def generate_icall_header(icalls):
         if ret_type != "void":
             if is_class_type(ret_type):
                 source.append("\tif (ret) {")
-                source.append("\t\treturn (Object *) godot::nativescript_1_1_api->godot_nativescript_get_instance_binding_data(godot::_RegisterState::language_index, ret);")
+                source.append("\t\treturn static_cast<Object *>(godot::nativescript_1_1_api->godot_nativescript_get_instance_binding_data(godot::_RegisterState::language_index, ret));")
                 source.append("\t}")
                 source.append("")
-                source.append("\treturn (Object *) ret;")
+                source.append("\treturn static_cast<Object *>(ret);")
             else:
                 source.append("\treturn ret;")
 

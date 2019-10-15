@@ -28,15 +28,15 @@ bool Dictionary::empty() const {
 }
 
 void Dictionary::erase(const Variant &key) {
-	godot::api->godot_dictionary_erase(&_godot_dictionary, (godot_variant *)&key);
+	godot::api->godot_dictionary_erase(&_godot_dictionary, reinterpret_cast<const godot_variant *>(&key));
 }
 
 bool Dictionary::has(const Variant &key) const {
-	return godot::api->godot_dictionary_has(&_godot_dictionary, (godot_variant *)&key);
+	return godot::api->godot_dictionary_has(&_godot_dictionary, reinterpret_cast<const godot_variant *>(&key));
 }
 
 bool Dictionary::has_all(const Array &keys) const {
-	return godot::api->godot_dictionary_has_all(&_godot_dictionary, (godot_array *)&keys);
+	return godot::api->godot_dictionary_has_all(&_godot_dictionary, reinterpret_cast<const godot_array *>(&keys));
 }
 
 uint32_t Dictionary::hash() const {
@@ -45,16 +45,16 @@ uint32_t Dictionary::hash() const {
 
 Array Dictionary::keys() const {
 	godot_array a = godot::api->godot_dictionary_keys(&_godot_dictionary);
-	return *(Array *)&a;
+	return *reinterpret_cast<Array *>(&a);
 }
 
 Variant &Dictionary::operator[](const Variant &key) {
-	return *(Variant *)godot::api->godot_dictionary_operator_index(&_godot_dictionary, (godot_variant *)&key);
+	return *reinterpret_cast<Variant *>(godot::api->godot_dictionary_operator_index(&_godot_dictionary, reinterpret_cast<const godot_variant *>(&key)));
 }
 
 const Variant &Dictionary::operator[](const Variant &key) const {
 	// oops I did it again
-	return *(Variant *)godot::api->godot_dictionary_operator_index((godot_dictionary *)&_godot_dictionary, (godot_variant *)&key);
+	return *reinterpret_cast<Variant *>(godot::api->godot_dictionary_operator_index(const_cast<godot_dictionary *>(&_godot_dictionary), reinterpret_cast<const godot_variant *>(&key)));
 }
 
 int Dictionary::size() const {
@@ -63,12 +63,12 @@ int Dictionary::size() const {
 
 String Dictionary::to_json() const {
 	godot_string s = godot::api->godot_dictionary_to_json(&_godot_dictionary);
-	return *(String *)&s;
+	return *reinterpret_cast<String *>(&s);
 }
 
 Array Dictionary::values() const {
 	godot_array a = godot::api->godot_dictionary_values(&_godot_dictionary);
-	return *(Array *)&a;
+	return *reinterpret_cast<Array *>(&a);
 }
 
 Dictionary::~Dictionary() {
