@@ -16,3 +16,6 @@ bin
 *.creator.user
 *.files
 *.includes
+
+# NDK temp toolchain
+tempchain
