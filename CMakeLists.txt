@@ -4,6 +4,7 @@
 # godot-cpp cmake arguments
 # GODOT_HEADERS_DIR:		This is where the gdnative include folder is (godot_source/modules/gdnative/include)
 # GODOT_CUSTOM_API_FILE:	This is if you have another path for the godot_api.json
+# GODOT_BIN:				Path to the godot executable to generate api.json. Leave empty to use GODOT_CUSTOM_API_FILE.
 # 
 # Android cmake arguments
 # CMAKE_TOOLCHAIN_FILE:		The path to the android cmake toolchain ($ANDROID_NDK/build/cmake/android.toolchain.cmake)
@@ -37,28 +38,10 @@
 project(godot-cpp)
 cmake_minimum_required(VERSION 3.6)
 
-# Change the output directory to the bin directory
-set(BUILD_PATH ${CMAKE_SOURCE_DIR}/bin)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BUILD_PATH}")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BUILD_PATH}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BUILD_PATH}")
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${BUILD_PATH}")
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${BUILD_PATH}")
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG "${BUILD_PATH}")
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${BUILD_PATH}")
-SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${BUILD_PATH}")
-SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${BUILD_PATH}")
-
 # Default build type is Debug in the SConstruct
 if(CMAKE_BUILD_TYPE STREQUAL "")
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
-
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-	add_definitions(-D_DEBUG)
-else()
-	add_definitions(-DNDEBUG)
-endif(CMAKE_BUILD_TYPE MATCHES Debug)
 
 # Set the c++ standard to c++14
 set(CMAKE_CXX_STANDARD 14)
@@ -66,23 +49,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Input from user for godot headers and the api file
-set(GODOT_HEADERS_DIR "godot_headers" CACHE STRING "")
-set(GODOT_CUSTOM_API_FILE "godot_headers/api.json" CACHE STRING "")
+set(GODOT_HEADERS_DIR "godot_headers" CACHE PATH "")
+set(GODOT_CUSTOM_API_FILE "${CMAKE_CURRENT_SOURCE_DIR}/godot_headers/api.json" CACHE FILEPATH "")
+set(GODOT_BIN "" CACHE FILEPATH "Godot executable to generate GODOT_CUSTOM_API_FILE. Leave empty to use GODOT_CUSTOM_API_FILE.")
 
 set(GODOT_COMPILE_FLAGS )
 set(GODOT_LINKER_FLAGS )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	# using Visual Studio C++
-	set(GODOT_COMPILE_FLAGS "/EHsc /WX") # /GF /MP
 
-	if(CMAKE_BUILD_TYPE MATCHES Debug)
-		set(GODOT_COMPILE_FLAGS "${GODOT_COMPILE_FLAGS} /MDd") # /Od /RTC1 /Zi
-	else()
-		set(GODOT_COMPILE_FLAGS "${GODOT_COMPILE_FLAGS} /MD /O2") # /Oy /GL /Gy
-		STRING(REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-		string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
-	endif(CMAKE_BUILD_TYPE MATCHES Debug)
+	# No runtime check
+	STRING(REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+	string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
+
+	# Enable exception with "C" mode
+	set(GODOT_COMPILE_FLAGS "/EHsc /WX") # /GF /MP
 
 	# Disable conversion warning, trunkation, unreferenced var, signed missmatch
 	set(GODOT_COMPILE_FLAGS "${GODOT_COMPILE_FLAGS} /wd4244 /wd4305 /wd4101 /wd4018 /wd4267")
@@ -130,13 +112,42 @@ else()
 	endif(CMAKE_BUILD_TYPE MATCHES Debug)
 endif()
 
+# prepare api.json
+if("${GODOT_BIN}" STREQUAL "")
+	if(EXISTS "${GODOT_CUSTOM_API_FILE}")
+	set(GODOT_API_FILE_GEN ${GODOT_CUSTOM_API_FILE})
+	else()
+	message(FATAL_ERROR "${GODOT_CUSTOM_API_FILE} is not readable")
+	endif()
+else()  # generate api file
+	set(GODOT_API_FILE_GEN ${PROJECT_BINARY_DIR}/godot_api.json)
+	execute_process(COMMAND ${GODOT_BIN} --version OUTPUT_VARIABLE GODOT_BIN_VERSION)
+	if(EXISTS ${PROJECT_BINARY_DIR}/godot_bin_version)
+		file(READ ${PROJECT_BINARY_DIR}/godot_bin_version GODOT_API_VERSION)
+	endif()
+
+	if(NOT EXISTS ${GODOT_API_FILE_GEN} OR NOT "${GODOT_BIN_VERSION}" STREQUAL "${GODOT_API_VERSION}")
+		message(STATUS "Generating api file: ${GODOT_CUSTOM_API_FILE}")
+		execute_process(COMMAND ${GODOT_BIN} --gdnative-generate-json-api ${GODOT_API_FILE_GEN})
+		execute_process(COMMAND ${GODOT_BIN} --version OUTPUT_FILE ${PROJECT_BINARY_DIR}/godot_bin_version)
+	endif()
+endif()
+
 # Generate source from the bindings file
-message(STATUS "Generating Bindings")
-execute_process(COMMAND "python" "-c" "import binding_generator; binding_generator.generate_bindings(\"${GODOT_CUSTOM_API_FILE}\")"
+if(${GODOT_API_FILE_GEN} IS_NEWER_THAN ${PROJECT_BINARY_DIR}/api_generated.stamp)
+	message(STATUS "Generating Bindings")
+	execute_process(COMMAND "python" "-c" "import binding_generator; binding_generator.generate_bindings(\"${GODOT_API_FILE_GEN}\")"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	RESULT_VARIABLE GENERATION_RESULT
 	OUTPUT_VARIABLE GENERATION_OUTPUT)
-message(STATUS ${GENERATION_RESULT} ${GENERATION_OUTPUT})
+	if (GENERATION_RESULT EQUAL "0")
+	message(STATUS "Success")
+		file(TOUCH ${PROJECT_BINARY_DIR}/api_generated.stamp)
+	else()
+		message(STATUS ${GENERATION_RESULT} ${GENERATION_OUTPUT})
+		message(FATAL_ERROR "Failed")
+	endif()
+endif()
 
 # Get Sources
 file(GLOB_RECURSE SOURCES src/*.c**)
@@ -161,21 +172,8 @@ target_include_directories(${PROJECT_NAME}
 set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${GODOT_COMPILE_FLAGS})
 set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS ${GODOT_LINKER_FLAGS})
 
-# Create the correct name (godot.os.build_type.system_bits)
-
-set(BITS 32)
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-	set(BITS 64)
-endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-
-string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
-string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
-
-if(ANDROID)
-	# Added the android abi after system name
-	set(SYSTEM_NAME ${SYSTEM_NAME}.${ANDROID_ABI})
-	# Android does not have the bits at the end if you look at the main godot repo build
-	set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "godot-cpp.${SYSTEM_NAME}.${BUILD_TYPE}")
-else()
-	set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "godot-cpp.${SYSTEM_NAME}.${BUILD_TYPE}.${BITS}")
+# Defining _DEBUG is not required for MSVC
+if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+target_compile_definitions(tgt PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
+target_compile_definitions(tgt PRIVATE $<$<NOT:$<CONFIG:Debug>>:NDEBUG>)
 endif()
