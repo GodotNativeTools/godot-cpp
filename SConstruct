@@ -170,9 +170,22 @@ opts.Add(BoolVariable(
 	"Generate a template version of the Node class's get_node.",
 	True
 ))
+opts.Add(BoolVariable(
+    'use_precise_math_checks',
+    'Math checks use very precise epsilon (debug option)',
+    False
+))
+
 
 opts.Update(env)
 Help(opts.GenerateHelpText(env))
+
+if env['target'] == 'debug':
+    env.Append(CPPDEFINES=['MATH_CHECKS'])
+
+if env["use_precise_math_checks"]:
+    env.Append(CPPDEFINES=["PRECISE_MATH_CHECKS"])
+
 
 # This makes sure to keep the session environment variables on Windows.
 # This way, you can run SCons in a Visual Studio 2017 prompt and it will find
@@ -274,9 +287,11 @@ elif env['platform'] == 'windows':
         # MSVC
         env.Append(LINKFLAGS=['/WX'])
         if env['target'] == 'debug':
-            env.Append(CCFLAGS=['/Z7', '/Od', '/EHsc', '/D_DEBUG', '/MDd'])
+            env.Append(CCFLAGS=['/Z7', '/Od', '/EHsc', '/MDd'])
+            env.Append(CPPDEFINES=['_DEBUG'])
         elif env['target'] == 'release':
-            env.Append(CCFLAGS=['/O2', '/EHsc', '/DNDEBUG', '/MD'])
+            env.Append(CCFLAGS=['/O2', '/EHsc', '/MD'])
+            env.Append(CPPDEFINES=['NDEBUG'])
 
     elif host_platform == 'linux' or host_platform == 'osx':
         # Cross-compilation using MinGW
@@ -290,7 +305,7 @@ elif env['platform'] == 'windows':
             env['AR'] = "i686-w64-mingw32-ar"
             env['RANLIB'] = "i686-w64-mingw32-ranlib"
             env['LINK'] = "i686-w64-mingw32-g++"
-    
+
     elif host_platform == 'windows' and env['use_mingw']:
         # Don't Clone the environment. Because otherwise, SCons will pick up msvc stuff.
         env = Environment(ENV = os.environ, tools=["mingw"])
@@ -381,17 +396,24 @@ env.Append(CPPPATH=[
 
 # Generate bindings?
 json_api_file = ''
+json_builtin_api_file = ''
 
 if 'custom_api_file' in env:
     json_api_file = env['custom_api_file']
 else:
     json_api_file = os.path.join(os.getcwd(), env['headers_dir'], 'api.json')
 
+if 'custom_builtin_api_file' in env:
+    json_builtin_api_file = env['custom_builtin_api_file']
+else:
+    json_builtin_api_file = os.path.join(os.getcwd(), env['headers_dir'], 'builtin_api.json')
+
 if env['generate_bindings']:
     # Actually create the bindings here
     import binding_generator
 
     binding_generator.generate_bindings(json_api_file, env['generate_template_get_node'])
+    binding_generator.generate_builtin_bindings(json_builtin_api_file)
 
 # Sources to compile
 sources = []

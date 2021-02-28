@@ -1,38 +1,21 @@
-#ifndef VECTOR3_H
-#define VECTOR3_H
+#ifndef GODOT_VECTOR3_HPP
+#define GODOT_VECTOR3_HPP
 
-#include <gdnative/vector3.h>
-
-#include "Defs.hpp"
-
-#include "String.hpp"
-
+#include <Defs.hpp>
 #include <Math.hpp>
+#include <String.hpp>
 
 namespace godot {
 
 class Basis;
+struct Vector3i;
 
 struct Vector3 {
-
 	enum Axis {
 		AXIS_X,
 		AXIS_Y,
 		AXIS_Z,
-		AXIS_COUNT
 	};
-
-	static const Vector3 ZERO;
-	static const Vector3 ONE;
-	static const Vector3 INF;
-
-	// Coordinate system of the 3D engine
-	static const Vector3 LEFT;
-	static const Vector3 RIGHT;
-	static const Vector3 UP;
-	static const Vector3 DOWN;
-	static const Vector3 FORWARD;
-	static const Vector3 BACK;
 
 	union {
 		struct {
@@ -41,20 +24,8 @@ struct Vector3 {
 			real_t z;
 		};
 
-		real_t coord[3]; // Not for direct access, use [] operator instead
+		real_t coord[3] = { 0 };
 	};
-
-	inline Vector3(real_t x, real_t y, real_t z) {
-		this->x = x;
-		this->y = y;
-		this->z = z;
-	}
-
-	inline Vector3() {
-		this->x = 0;
-		this->y = 0;
-		this->z = 0;
-	}
 
 	inline const real_t &operator[](int p_axis) const {
 		return coord[p_axis];
@@ -64,251 +35,375 @@ struct Vector3 {
 		return coord[p_axis];
 	}
 
-	inline Vector3 &operator+=(const Vector3 &p_v) {
-		x += p_v.x;
-		y += p_v.y;
-		z += p_v.z;
-		return *this;
-	}
-
-	inline Vector3 operator+(const Vector3 &p_v) const {
-		Vector3 v = *this;
-		v += p_v;
-		return v;
-	}
-
-	inline Vector3 &operator-=(const Vector3 &p_v) {
-		x -= p_v.x;
-		y -= p_v.y;
-		z -= p_v.z;
-		return *this;
-	}
-
-	inline Vector3 operator-(const Vector3 &p_v) const {
-		Vector3 v = *this;
-		v -= p_v;
-		return v;
-	}
-
-	inline Vector3 &operator*=(const Vector3 &p_v) {
-		x *= p_v.x;
-		y *= p_v.y;
-		z *= p_v.z;
-		return *this;
-	}
-
-	inline Vector3 operator*(const Vector3 &p_v) const {
-		Vector3 v = *this;
-		v *= p_v;
-		return v;
-	}
-
-	inline Vector3 &operator/=(const Vector3 &p_v) {
-		x /= p_v.x;
-		y /= p_v.y;
-		z /= p_v.z;
-		return *this;
-	}
-
-	inline Vector3 operator/(const Vector3 &p_v) const {
-		Vector3 v = *this;
-		v /= p_v;
-		return v;
-	}
-
-	inline Vector3 &operator*=(real_t p_scalar) {
-		*this *= Vector3(p_scalar, p_scalar, p_scalar);
-		return *this;
-	}
-
-	inline Vector3 operator*(real_t p_scalar) const {
-		Vector3 v = *this;
-		v *= p_scalar;
-		return v;
-	}
-
-	inline Vector3 &operator/=(real_t p_scalar) {
-		*this /= Vector3(p_scalar, p_scalar, p_scalar);
-		return *this;
-	}
-
-	inline Vector3 operator/(real_t p_scalar) const {
-		Vector3 v = *this;
-		v /= p_scalar;
-		return v;
-	}
-
-	inline Vector3 operator-() const {
-		return Vector3(-x, -y, -z);
-	}
-
-	inline bool operator==(const Vector3 &p_v) const {
-		return (x == p_v.x && y == p_v.y && z == p_v.z);
-	}
-
-	inline bool operator!=(const Vector3 &p_v) const {
-		return (x != p_v.x || y != p_v.y || z != p_v.z);
-	}
-
-	bool operator<(const Vector3 &p_v) const;
-
-	bool operator<=(const Vector3 &p_v) const;
-
-	inline Vector3 abs() const {
-		return Vector3(::fabs(x), ::fabs(y), ::fabs(z));
-	}
-
-	inline Vector3 ceil() const {
-		return Vector3(::ceil(x), ::ceil(y), ::ceil(z));
-	}
-
-	inline Vector3 cross(const Vector3 &b) const {
-		Vector3 ret(
-				(y * b.z) - (z * b.y),
-				(z * b.x) - (x * b.z),
-				(x * b.y) - (y * b.x));
-
-		return ret;
-	}
-
-	inline Vector3 linear_interpolate(const Vector3 &p_b, real_t p_t) const {
-		return Vector3(
-				x + (p_t * (p_b.x - x)),
-				y + (p_t * (p_b.y - y)),
-				z + (p_t * (p_b.z - z)));
-	}
-
-	inline Vector3 slerp(const Vector3 &p_b, real_t p_t) const {
-		real_t theta = angle_to(p_b);
-		return rotated(cross(p_b).normalized(), theta * p_t);
-	}
-
-	Vector3 cubic_interpolate(const Vector3 &b, const Vector3 &pre_a, const Vector3 &post_b, const real_t t) const;
-
-	Vector3 move_toward(const Vector3 &p_to, const real_t p_delta) const {
-		Vector3 v = *this;
-		Vector3 vd = p_to - v;
-		real_t len = vd.length();
-		return len <= p_delta || len < CMP_EPSILON ? p_to : v + vd / len * p_delta;
-	}
-
-	Vector3 bounce(const Vector3 &p_normal) const {
-		return -reflect(p_normal);
-	}
-
-	inline real_t length() const {
-		real_t x2 = x * x;
-		real_t y2 = y * y;
-		real_t z2 = z * z;
-
-		return ::sqrt(x2 + y2 + z2);
-	}
-
-	inline real_t length_squared() const {
-		real_t x2 = x * x;
-		real_t y2 = y * y;
-		real_t z2 = z * z;
-
-		return x2 + y2 + z2;
-	}
-
-	inline real_t distance_squared_to(const Vector3 &b) const {
-		return (b - *this).length_squared();
-	}
-
-	inline real_t distance_to(const Vector3 &b) const {
-		return (b - *this).length();
-	}
-
-	inline real_t dot(const Vector3 &b) const {
-		return x * b.x + y * b.y + z * b.z;
-	}
-
-	inline Vector3 project(const Vector3 &p_b) const {
-		return p_b * (dot(p_b) / p_b.length_squared());
-	}
-
-	inline real_t angle_to(const Vector3 &b) const {
-		return std::atan2(cross(b).length(), dot(b));
-	}
-
-	inline Vector3 direction_to(const Vector3 &p_b) const {
-		Vector3 ret(p_b.x - x, p_b.y - y, p_b.z - z);
-		ret.normalize();
-		return ret;
-	}
-
-	inline Vector3 floor() const {
-		return Vector3(::floor(x), ::floor(y), ::floor(z));
-	}
-
-	inline Vector3 inverse() const {
-		return Vector3(1.f / x, 1.f / y, 1.f / z);
-	}
-
-	inline bool is_normalized() const {
-		return std::abs(length_squared() - 1.f) < 0.00001f;
-	}
-
-	Basis outer(const Vector3 &b) const;
-
-	int max_axis() const;
+	void set_axis(int p_axis, real_t p_value);
+	real_t get_axis(int p_axis) const;
 
 	int min_axis() const;
+	int max_axis() const;
 
-	inline void normalize() {
-		real_t l = length();
-		if (l == 0) {
-			x = y = z = 0;
-		} else {
-			x /= l;
-			y /= l;
-			z /= l;
-		}
-	}
+	inline real_t length() const;
+	inline real_t length_squared() const;
 
-	inline Vector3 normalized() const {
-		Vector3 v = *this;
-		v.normalize();
-		return v;
-	}
+	inline void normalize();
+	inline Vector3 normalized() const;
+	inline bool is_normalized() const;
+	inline Vector3 inverse() const;
 
-	inline Vector3 reflect(const Vector3 &p_normal) const {
-		return -(*this - p_normal * this->dot(p_normal) * 2.0);
-	}
+	inline void zero();
 
-	inline Vector3 rotated(const Vector3 &axis, const real_t phi) const {
-		Vector3 v = *this;
-		v.rotate(axis, phi);
-		return v;
-	}
+	void snap(Vector3 p_val);
+	Vector3 snapped(Vector3 p_val) const;
 
 	void rotate(const Vector3 &p_axis, real_t p_phi);
+	Vector3 rotated(const Vector3 &p_axis, real_t p_phi) const;
 
-	inline Vector3 slide(const Vector3 &by) const {
-		return *this - by * this->dot(by);
-	}
+	/* Static Methods between 2 vector3s */
 
-	void snap(real_t p_val);
+	inline Vector3 lerp(const Vector3 &p_to, real_t p_weight) const;
+	inline Vector3 slerp(const Vector3 &p_to, real_t p_weight) const;
+	Vector3 cubic_interpolate(const Vector3 &p_b, const Vector3 &p_pre_a, const Vector3 &p_post_b, real_t p_weight) const;
+	Vector3 move_toward(const Vector3 &p_to, const real_t p_delta) const;
 
-	inline Vector3 snapped(const float by) {
-		Vector3 v = *this;
-		v.snap(by);
-		return v;
-	}
+	inline Vector3 cross(const Vector3 &p_b) const;
+	inline real_t dot(const Vector3 &p_b) const;
+	Basis outer(const Vector3 &p_b) const;
+	Basis to_diagonal_matrix() const;
+
+	inline Vector3 abs() const;
+	inline Vector3 floor() const;
+	inline Vector3 sign() const;
+	inline Vector3 ceil() const;
+	inline Vector3 round() const;
+
+	inline real_t distance_to(const Vector3 &p_to) const;
+	inline real_t distance_squared_to(const Vector3 &p_to) const;
+
+	inline Vector3 posmod(const real_t p_mod) const;
+	inline Vector3 posmodv(const Vector3 &p_modv) const;
+	inline Vector3 project(const Vector3 &p_to) const;
+
+	inline real_t angle_to(const Vector3 &p_to) const;
+	inline Vector3 direction_to(const Vector3 &p_to) const;
+
+	inline Vector3 slide(const Vector3 &p_normal) const;
+	inline Vector3 bounce(const Vector3 &p_normal) const;
+	inline Vector3 reflect(const Vector3 &p_normal) const;
+
+	bool is_equal_approx(const Vector3 &p_v) const;
+
+	/* Operators */
+
+	inline Vector3 &operator+=(const Vector3 &p_v);
+	inline Vector3 operator+(const Vector3 &p_v) const;
+	inline Vector3 &operator-=(const Vector3 &p_v);
+	inline Vector3 operator-(const Vector3 &p_v) const;
+	inline Vector3 &operator*=(const Vector3 &p_v);
+	inline Vector3 operator*(const Vector3 &p_v) const;
+	inline Vector3 &operator/=(const Vector3 &p_v);
+	inline Vector3 operator/(const Vector3 &p_v) const;
+
+	inline Vector3 &operator*=(real_t p_scalar);
+	inline Vector3 operator*(real_t p_scalar) const;
+	inline Vector3 &operator/=(real_t p_scalar);
+	inline Vector3 operator/(real_t p_scalar) const;
+
+	inline Vector3 operator-() const;
+
+	inline bool operator==(const Vector3 &p_v) const;
+	inline bool operator!=(const Vector3 &p_v) const;
+	inline bool operator<(const Vector3 &p_v) const;
+	inline bool operator<=(const Vector3 &p_v) const;
+	inline bool operator>(const Vector3 &p_v) const;
+	inline bool operator>=(const Vector3 &p_v) const;
 
 	operator String() const;
+	operator Vector3i() const;
+
+	inline Vector3() {}
+	inline Vector3(real_t p_x, real_t p_y, real_t p_z) {
+		x = p_x;
+		y = p_y;
+		z = p_z;
+	}
+	inline explicit Vector3(const godot_vector3 &p_godot_vector3) {
+		*this = *((Vector3 *)&p_godot_vector3);
+	}
+	Vector3(const Vector3i &p_ivec);
 };
+
+Vector3 Vector3::cross(const Vector3 &p_b) const {
+	Vector3 ret(
+			(y * p_b.z) - (z * p_b.y),
+			(z * p_b.x) - (x * p_b.z),
+			(x * p_b.y) - (y * p_b.x));
+
+	return ret;
+}
+
+real_t Vector3::dot(const Vector3 &p_b) const {
+	return x * p_b.x + y * p_b.y + z * p_b.z;
+}
+
+Vector3 Vector3::abs() const {
+	return Vector3(Math::abs(x), Math::abs(y), Math::abs(z));
+}
+
+Vector3 Vector3::sign() const {
+	return Vector3(Math::sign(x), Math::sign(y), Math::sign(z));
+}
+
+Vector3 Vector3::floor() const {
+	return Vector3(Math::floor(x), Math::floor(y), Math::floor(z));
+}
+
+Vector3 Vector3::ceil() const {
+	return Vector3(Math::ceil(x), Math::ceil(y), Math::ceil(z));
+}
+
+Vector3 Vector3::round() const {
+	return Vector3(Math::round(x), Math::round(y), Math::round(z));
+}
+
+Vector3 Vector3::lerp(const Vector3 &p_to, real_t p_weight) const {
+	return Vector3(
+			x + (p_weight * (p_to.x - x)),
+			y + (p_weight * (p_to.y - y)),
+			z + (p_weight * (p_to.z - z)));
+}
+
+Vector3 Vector3::slerp(const Vector3 &p_to, real_t p_weight) const {
+	real_t theta = angle_to(p_to);
+	return rotated(cross(p_to).normalized(), theta * p_weight);
+}
+
+real_t Vector3::distance_to(const Vector3 &p_to) const {
+	return (p_to - *this).length();
+}
+
+real_t Vector3::distance_squared_to(const Vector3 &p_to) const {
+	return (p_to - *this).length_squared();
+}
+
+Vector3 Vector3::posmod(const real_t p_mod) const {
+	return Vector3(Math::fposmod(x, p_mod), Math::fposmod(y, p_mod), Math::fposmod(z, p_mod));
+}
+
+Vector3 Vector3::posmodv(const Vector3 &p_modv) const {
+	return Vector3(Math::fposmod(x, p_modv.x), Math::fposmod(y, p_modv.y), Math::fposmod(z, p_modv.z));
+}
+
+Vector3 Vector3::project(const Vector3 &p_to) const {
+	return p_to * (dot(p_to) / p_to.length_squared());
+}
+
+real_t Vector3::angle_to(const Vector3 &p_to) const {
+	return Math::atan2(cross(p_to).length(), dot(p_to));
+}
+
+Vector3 Vector3::direction_to(const Vector3 &p_to) const {
+	Vector3 ret(p_to.x - x, p_to.y - y, p_to.z - z);
+	ret.normalize();
+	return ret;
+}
+
+/* Operators */
+
+Vector3 &Vector3::operator+=(const Vector3 &p_v) {
+	x += p_v.x;
+	y += p_v.y;
+	z += p_v.z;
+	return *this;
+}
+
+Vector3 Vector3::operator+(const Vector3 &p_v) const {
+	return Vector3(x + p_v.x, y + p_v.y, z + p_v.z);
+}
+
+Vector3 &Vector3::operator-=(const Vector3 &p_v) {
+	x -= p_v.x;
+	y -= p_v.y;
+	z -= p_v.z;
+	return *this;
+}
+
+Vector3 Vector3::operator-(const Vector3 &p_v) const {
+	return Vector3(x - p_v.x, y - p_v.y, z - p_v.z);
+}
+
+Vector3 &Vector3::operator*=(const Vector3 &p_v) {
+	x *= p_v.x;
+	y *= p_v.y;
+	z *= p_v.z;
+	return *this;
+}
+
+Vector3 Vector3::operator*(const Vector3 &p_v) const {
+	return Vector3(x * p_v.x, y * p_v.y, z * p_v.z);
+}
+
+Vector3 &Vector3::operator/=(const Vector3 &p_v) {
+	x /= p_v.x;
+	y /= p_v.y;
+	z /= p_v.z;
+	return *this;
+}
+
+Vector3 Vector3::operator/(const Vector3 &p_v) const {
+	return Vector3(x / p_v.x, y / p_v.y, z / p_v.z);
+}
+
+Vector3 &Vector3::operator*=(real_t p_scalar) {
+	x *= p_scalar;
+	y *= p_scalar;
+	z *= p_scalar;
+	return *this;
+}
 
 inline Vector3 operator*(real_t p_scalar, const Vector3 &p_vec) {
 	return p_vec * p_scalar;
 }
 
-inline Vector3 vec3_cross(const Vector3 &p_a, const Vector3 &p_b) {
+Vector3 Vector3::operator*(real_t p_scalar) const {
+	return Vector3(x * p_scalar, y * p_scalar, z * p_scalar);
+}
 
+Vector3 &Vector3::operator/=(real_t p_scalar) {
+	x /= p_scalar;
+	y /= p_scalar;
+	z /= p_scalar;
+	return *this;
+}
+
+Vector3 Vector3::operator/(real_t p_scalar) const {
+	return Vector3(x / p_scalar, y / p_scalar, z / p_scalar);
+}
+
+Vector3 Vector3::operator-() const {
+	return Vector3(-x, -y, -z);
+}
+
+bool Vector3::operator==(const Vector3 &p_v) const {
+	return x == p_v.x && y == p_v.y && z == p_v.z;
+}
+
+bool Vector3::operator!=(const Vector3 &p_v) const {
+	return x != p_v.x || y != p_v.y || z != p_v.z;
+}
+
+bool Vector3::operator<(const Vector3 &p_v) const {
+	if (x == p_v.x) {
+		if (y == p_v.y) {
+			return z < p_v.z;
+		}
+		return y < p_v.y;
+	}
+	return x < p_v.x;
+}
+
+bool Vector3::operator>(const Vector3 &p_v) const {
+	if (x == p_v.x) {
+		if (y == p_v.y) {
+			return z > p_v.z;
+		}
+		return y > p_v.y;
+	}
+	return x > p_v.x;
+}
+
+bool Vector3::operator<=(const Vector3 &p_v) const {
+	if (x == p_v.x) {
+		if (y == p_v.y) {
+			return z <= p_v.z;
+		}
+		return y < p_v.y;
+	}
+	return x < p_v.x;
+}
+
+bool Vector3::operator>=(const Vector3 &p_v) const {
+	if (x == p_v.x) {
+		if (y == p_v.y) {
+			return z >= p_v.z;
+		}
+		return y > p_v.y;
+	}
+	return x > p_v.x;
+}
+
+inline Vector3 vec3_cross(const Vector3 &p_a, const Vector3 &p_b) {
 	return p_a.cross(p_b);
+}
+
+inline real_t vec3_dot(const Vector3 &p_a, const Vector3 &p_b) {
+	return p_a.dot(p_b);
+}
+
+real_t Vector3::length() const {
+	real_t x2 = x * x;
+	real_t y2 = y * y;
+	real_t z2 = z * z;
+
+	return Math::sqrt(x2 + y2 + z2);
+}
+
+real_t Vector3::length_squared() const {
+	real_t x2 = x * x;
+	real_t y2 = y * y;
+	real_t z2 = z * z;
+
+	return x2 + y2 + z2;
+}
+
+void Vector3::normalize() {
+	real_t lengthsq = length_squared();
+	if (lengthsq == 0) {
+		x = y = z = 0;
+	} else {
+		real_t length = Math::sqrt(lengthsq);
+		x /= length;
+		y /= length;
+		z /= length;
+	}
+}
+
+Vector3 Vector3::normalized() const {
+	Vector3 v = *this;
+	v.normalize();
+	return v;
+}
+
+bool Vector3::is_normalized() const {
+	// use length_squared() instead of length() to avoid sqrt(), makes it more stringent.
+	return Math::is_equal_approx(length_squared(), 1.0, UNIT_EPSILON);
+}
+
+Vector3 Vector3::inverse() const {
+	return Vector3(1.0 / x, 1.0 / y, 1.0 / z);
+}
+
+void Vector3::zero() {
+	x = y = z = 0;
+}
+
+// slide returns the component of the vector along the given plane, specified by its normal vector.
+Vector3 Vector3::slide(const Vector3 &p_normal) const {
+#ifdef MATH_CHECKS
+	ERR_FAIL_COND_V(!p_normal.is_normalized(), Vector3());
+#endif
+	return *this - p_normal * this->dot(p_normal);
+}
+
+Vector3 Vector3::bounce(const Vector3 &p_normal) const {
+	return -reflect(p_normal);
+}
+
+Vector3 Vector3::reflect(const Vector3 &p_normal) const {
+#ifdef MATH_CHECKS
+	ERR_FAIL_COND_V(!p_normal.is_normalized(), Vector3());
+#endif
+	return 2.0 * p_normal * this->dot(p_normal) - *this;
 }
 
 } // namespace godot
 
-#endif // VECTOR3_H
+#endif // GODOT_VECTOR3_HPP

@@ -3,103 +3,116 @@
 
 #include <gdnative/variant.h>
 
+// #include "CoreTypes.hpp"
 #include "Defs.hpp"
-
-#include "AABB.hpp"
-#include "Basis.hpp"
-#include "Color.hpp"
-#include "NodePath.hpp"
-#include "Plane.hpp"
-#include "PoolArrays.hpp"
-#include "Quat.hpp"
-#include "RID.hpp"
-#include "Rect2.hpp"
-#include "String.hpp"
-#include "Transform.hpp"
-#include "Transform2D.hpp"
-#include "Vector2.hpp"
-#include "Vector3.hpp"
 
 #include <iostream>
 
 namespace godot {
 
-class Dictionary;
-
+class AABB;
 class Array;
+class Basis;
+class Callable;
+class Color;
+class Dictionary;
+class NodePath;
+class Object;
+class PackedByteArray;
+class PackedColorArray;
+class PackedFloat32Array;
+class PackedFloat64Array;
+class PackedInt32Array;
+class PackedInt64Array;
+class PackedStringArray;
+class PackedVector2Array;
+class PackedVector3Array;
+class Plane;
+class Quat;
+class Rect2;
+class Rect2i;
+class Signal;
+class String;
+class StringName;
+class Transform;
+class Transform2D;
+class Variant;
+class Vector2;
+class Vector2i;
+class Vector3;
+class Vector3i;
+class RID;
 
 class Variant {
 	godot_variant _godot_variant;
 
 	friend class Array;
-	inline explicit Variant(godot_variant v) {
-		_godot_variant = v;
-	}
 
 public:
 	enum Type {
-
 		NIL,
 
 		// atomic types
 		BOOL,
 		INT,
-		REAL,
+		FLOAT,
 		STRING,
 
 		// math types
-
-		VECTOR2, // 5
+		VECTOR2,
+		VECTOR2I,
 		RECT2,
+		RECT2I,
 		VECTOR3,
+		VECTOR3I,
 		TRANSFORM2D,
 		PLANE,
-		QUAT, // 10
-		RECT3, //sorry naming convention fail :( not like it's used often
+		QUAT,
+		AABB,
 		BASIS,
 		TRANSFORM,
 
 		// misc types
 		COLOR,
-		NODE_PATH, // 15
-		_RID,
+		STRING_NAME,
+		NODE_PATH,
+		RID,
 		OBJECT,
+		CALLABLE,
+		SIGNAL,
 		DICTIONARY,
 		ARRAY,
 
-		// arrays
-		POOL_BYTE_ARRAY, // 20
-		POOL_INT_ARRAY,
-		POOL_REAL_ARRAY,
-		POOL_STRING_ARRAY,
-		POOL_VECTOR2_ARRAY,
-		POOL_VECTOR3_ARRAY, // 25
-		POOL_COLOR_ARRAY,
+		// typed arrays
+		PACKED_BYTE_ARRAY,
+		PACKED_INT32_ARRAY,
+		PACKED_INT64_ARRAY,
+		PACKED_FLOAT32_ARRAY,
+		PACKED_FLOAT64_ARRAY,
+		PACKED_STRING_ARRAY,
+		PACKED_VECTOR2_ARRAY,
+		PACKED_VECTOR3_ARRAY,
+		PACKED_COLOR_ARRAY,
 
 		VARIANT_MAX
-
 	};
 
 	enum Operator {
-
-		//comparation
+		//comparison
 		OP_EQUAL,
 		OP_NOT_EQUAL,
 		OP_LESS,
 		OP_LESS_EQUAL,
 		OP_GREATER,
 		OP_GREATER_EQUAL,
-
 		//mathematic
 		OP_ADD,
-		OP_SUBSTRACT,
+		OP_SUBTRACT,
 		OP_MULTIPLY,
 		OP_DIVIDE,
 		OP_NEGATE,
 		OP_POSITIVE,
 		OP_MODULE,
-		OP_STRING_CONCAT,
-
 		//bitwise
 		OP_SHIFT_LEFT,
 		OP_SHIFT_RIGHT,
@@ -107,46 +120,49 @@ public:
 		OP_BIT_OR,
 		OP_BIT_XOR,
 		OP_BIT_NEGATE,
-
 		//logic
 		OP_AND,
 		OP_OR,
 		OP_XOR,
 		OP_NOT,
-
 		//containment
 		OP_IN,
 		OP_MAX
-
 	};
 
 	Variant();
 
+	inline explicit Variant(const godot_variant &variant) :
+			_godot_variant(variant) {}
+
 	Variant(const Variant &v);
 
-	Variant(bool p_bool);
+	Variant(godot_bool p_bool);
 
-	Variant(signed int p_int);
+	inline Variant(signed int p_int) :
+			Variant((godot_int)p_int) {}
 
-	Variant(unsigned int p_int);
+	inline Variant(unsigned int p_int) :
+			Variant((godot_int)p_int) {}
 
-	Variant(signed short p_short);
+	inline Variant(signed short p_short) :
+			Variant((godot_int)p_short) {}
 
 	inline Variant(unsigned short p_short) :
-			Variant((unsigned int)p_short) {}
+			Variant((godot_int)p_short) {}
 
 	inline Variant(signed char p_char) :
-			Variant((signed int)p_char) {}
+			Variant((godot_int)p_char) {}
 
 	inline Variant(unsigned char p_char) :
 			Variant((unsigned int)p_char) {}
-	Variant(int64_t p_char);
 
-	Variant(uint64_t p_char);
+	Variant(godot_int p_int);
 
-	Variant(float p_float);
+	inline Variant(float p_float) :
+			Variant((godot_float)p_float) {}
 
-	Variant(double p_double);
+	Variant(godot_float p_double);
 
 	Variant(const String &p_string);
 
@@ -154,15 +170,20 @@ public:
 
 	Variant(const wchar_t *p_wstring);
 
+	Variant(const char32_t *p_ucs4string);
+
 	Variant(const Vector2 &p_vector2);
+	Variant(const Vector2i &p_vector2i);
 
 	Variant(const Rect2 &p_rect2);
+	Variant(const Rect2i &p_rect2i);
 
 	Variant(const Vector3 &p_vector3);
+	Variant(const Vector3i &p_vector3i);
 
 	Variant(const Plane &p_plane);
 
-	Variant(const AABB &p_aabb);
+	Variant(const godot::AABB &p_aabb);
 
 	Variant(const Quat &p_quat);
 
@@ -174,9 +195,15 @@ public:
 
 	Variant(const Color &p_color);
 
+	Variant(const StringName &p_string_name);
+
 	Variant(const NodePath &p_path);
 
-	Variant(const RID &p_rid);
+	Variant(const godot::RID &p_rid);
+
+	Variant(const Callable &p_callable);
+
+	Variant(const Signal &p_signal);
 
 	Variant(const Object *p_object);
 
@@ -184,43 +211,48 @@ public:
 
 	Variant(const Array &p_array);
 
-	Variant(const PoolByteArray &p_raw_array);
+	Variant(const PackedByteArray &p_byte_array);
 
-	Variant(const PoolIntArray &p_int_array);
+	Variant(const PackedInt32Array &p_int32_array);
 
-	Variant(const PoolRealArray &p_real_array);
+	Variant(const PackedInt64Array &p_int64_array);
 
-	Variant(const PoolStringArray &p_string_array);
+	Variant(const PackedFloat32Array &p_float32_array);
 
-	Variant(const PoolVector2Array &p_vector2_array);
+	Variant(const PackedFloat64Array &p_float64_array);
 
-	Variant(const PoolVector3Array &p_vector3_array);
+	Variant(const PackedStringArray &p_string_array);
 
-	Variant(const PoolColorArray &p_color_array);
+	Variant(const PackedVector2Array &p_vector2_array);
+
+	Variant(const PackedVector3Array &p_vector3_array);
+
+	Variant(const PackedColorArray &p_color_array);
 
 	Variant &operator=(const Variant &v);
 
-	operator bool() const;
+	operator godot_bool() const;
+	operator godot_int() const;
 	operator signed int() const;
 	operator unsigned int() const;
 	operator signed short() const;
 	operator unsigned short() const;
 	operator signed char() const;
 	operator unsigned char() const;
-	operator int64_t() const;
 	operator uint64_t() const;
 
-	operator wchar_t() const;
-
+	operator godot_float() const;
 	operator float() const;
 
-	operator double() const;
 	operator String() const;
 	operator Vector2() const;
+	operator Vector2i() const;
 	operator Rect2() const;
+	operator Rect2i() const;
 	operator Vector3() const;
+	operator Vector3i() const;
 	operator Plane() const;
-	operator AABB() const;
+	operator godot::AABB() const;
 	operator Quat() const;
 	operator Basis() const;
 	operator Transform() const;
@@ -229,7 +261,9 @@ public:
 	operator Color() const;
 
 	operator NodePath() const;
-	operator RID() const;
+	operator godot::RID() const;
+	operator Callable() const;
+	operator Signal() const;
 	operator godot_object *() const;
 
 	template <typename T>
@@ -238,35 +272,49 @@ public:
 	operator Dictionary() const;
 	operator Array() const;
 
-	operator PoolByteArray() const;
-	operator PoolIntArray() const;
-	operator PoolRealArray() const;
-	operator PoolStringArray() const;
-	operator PoolVector2Array() const;
-	operator PoolVector3Array() const;
-	operator PoolColorArray() const;
+	operator PackedByteArray() const;
+	operator PackedInt32Array() const;
+	operator PackedInt64Array() const;
+	operator PackedFloat32Array() const;
+	operator PackedFloat64Array() const;
+	operator PackedStringArray() const;
+	operator PackedVector2Array() const;
+	operator PackedVector3Array() const;
+	operator PackedColorArray() const;
+
+	bool operator==(const Variant &p_b) const;
+	bool operator!=(const Variant &p_b) const;
+	bool operator<(const Variant &p_b) const;
+	bool operator<=(const Variant &p_b) const;
+	bool operator>(const Variant &p_b) const;
+	bool operator>=(const Variant &p_b) const;
 
 	Type get_type() const;
 
-	Variant call(const String &method, const Variant **args, const int arg_count);
+	static void evaluate(Operator p_op, const Variant &p_a, const Variant &p_b, Variant &r_ret, bool &r_valid);
+	static Variant get_constant_value(Type p_type, const StringName &p_name);
+	Variant call(const StringName &p_method, const Variant **p_args, const int p_arg_count);
+	Variant get(const Variant &p_key, bool &r_valid);
+	Variant get_named(const StringName &p_name, bool &r_valid);
+	Variant get_keyed(const Variant &p_key, bool &r_valid);
+	Variant get_indexed(godot_int p_index, bool &r_valid, bool &r_oob);
+	uint64_t get_indexed_size();
+	void set(const Variant &p_key, const Variant &p_value, bool &r_valid);
+	void set_named(const StringName &p_name, const Variant &p_value, bool &r_valid);
+	void set_keyed(const Variant &p_key, const Variant &p_value, bool &r_valid);
+	void set_indexed(godot_int p_index, const Variant &p_value, bool &r_valid);
 
-	bool has_method(const String &method);
+	bool has_method(const StringName &p_method);
 
-	bool operator==(const Variant &b) const;
-
-	bool operator!=(const Variant &b) const;
-
-	bool operator<(const Variant &b) const;
-
-	bool operator<=(const Variant &b) const;
-
-	bool operator>(const Variant &b) const;
-
-	bool operator>=(const Variant &b) const;
-
-	bool hash_compare(const Variant &b) const;
-
+	bool hash_compare(const Variant &p_b) const;
 	bool booleanize() const;
+	Variant duplicate(bool p_deep) const;
+	static void blend(const Variant &p_a, const Variant &p_b, float p_c, Variant &r_dst);
+	static void interpolate(const Variant &p_a, const Variant &p_b, float p_c, Variant &r_dst);
+
+	bool iter_init(Variant &r_iter, bool &r_valid) const;
+	bool iter_next(Variant &r_iter, bool &r_valid) const;
+	Variant iter_get(Variant &r_iter, bool &r_valid) const;
 
 	~Variant();
 };

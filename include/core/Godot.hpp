@@ -9,7 +9,7 @@
 #include <typeinfo>
 
 #include "CoreTypes.hpp"
-#include "Ref.hpp"
+// #include "Ref.hpp"
 #include "TagDB.hpp"
 #include "Variant.hpp"
 
@@ -24,7 +24,7 @@ namespace detail {
 // They all inherit `_Wrapped`.
 template <class T>
 T *get_wrapper(godot_object *obj) {
-	return (T *)godot::nativescript_1_1_api->godot_nativescript_get_instance_binding_data(godot::_RegisterState::language_index, obj);
+	return (T *)godot::nativescript_api->godot_nativescript_get_instance_binding_data(godot::_RegisterState::language_index, obj);
 }
 
 // Custom class instances are not obtainable by just casting the pointer to the base class they inherit,
@@ -133,6 +133,13 @@ struct _ArgCast {
 };
 
 template <class T>
+struct _ArgCast<const T &> {
+	static T _arg_cast(const Variant &a) {
+		return a;
+	}
+};
+
+template <class T>
 struct _ArgCast<T *> {
 	static T *_arg_cast(Variant a) {
 		return (T *)T::___get_from_variant(a);
@@ -142,6 +149,13 @@ struct _ArgCast<T *> {
 template <>
 struct _ArgCast<Variant> {
 	static Variant _arg_cast(Variant a) {
+		return a;
+	}
+};
+
+template <>
+struct _ArgCast<const Variant &> {
+	static Variant _arg_cast(const Variant &a) {
 		return a;
 	}
 };
@@ -167,10 +181,10 @@ template <class T>
 void register_class() {
 	static_assert(T::___CLASS_IS_SCRIPT, "This function must only be used on custom classes");
 
-	godot_instance_create_func create = {};
+	godot_nativescript_instance_create_func create = {};
 	create.create_func = _godot_class_instance_func<T>;
 
-	godot_instance_destroy_func destroy = {};
+	godot_nativescript_instance_destroy_func destroy = {};
 	destroy.destroy_func = _godot_class_destroy_func<T>;
 
 	_TagDB::register_type(T::___get_id(), T::___get_base_id());
@@ -178,7 +192,7 @@ void register_class() {
 	godot::nativescript_api->godot_nativescript_register_class(godot::_RegisterState::nativescript_handle,
 			T::___get_class_name(), T::___get_base_class_name(), create, destroy);
 
-	godot::nativescript_1_1_api->godot_nativescript_set_type_tag(godot::_RegisterState::nativescript_handle,
+	godot::nativescript_api->godot_nativescript_set_type_tag(godot::_RegisterState::nativescript_handle,
 			T::___get_class_name(), (const void *)T::___get_id());
 
 	T::_register_methods();
@@ -188,10 +202,10 @@ template <class T>
 void register_tool_class() {
 	static_assert(T::___CLASS_IS_SCRIPT, "This function must only be used on custom classes");
 
-	godot_instance_create_func create = {};
+	godot_nativescript_instance_create_func create = {};
 	create.create_func = _godot_class_instance_func<T>;
 
-	godot_instance_destroy_func destroy = {};
+	godot_nativescript_instance_destroy_func destroy = {};
 	destroy.destroy_func = _godot_class_destroy_func<T>;
 
 	_TagDB::register_type(T::___get_id(), T::___get_base_id());
@@ -199,7 +213,7 @@ void register_tool_class() {
 	godot::nativescript_api->godot_nativescript_register_tool_class(godot::_RegisterState::nativescript_handle,
 			T::___get_class_name(), T::___get_base_class_name(), create, destroy);
 
-	godot::nativescript_1_1_api->godot_nativescript_set_type_tag(godot::_RegisterState::nativescript_handle,
+	godot::nativescript_api->godot_nativescript_set_type_tag(godot::_RegisterState::nativescript_handle,
 			T::___get_class_name(), (const void *)T::___get_id());
 
 	T::_register_methods();
@@ -304,13 +318,13 @@ __godot_wrapper_method ___get_wrapper_function(R (T::*f)(A...) const) {
 }
 
 template <class M>
-void register_method(const char *name, M method_ptr, godot_method_rpc_mode rpc_type = GODOT_METHOD_RPC_MODE_DISABLED) {
-	godot_instance_method method = {};
+void register_method(const char *name, M method_ptr, godot_nativescript_method_rpc_mode rpc_type = GODOT_METHOD_RPC_MODE_DISABLED) {
+	godot_nativescript_instance_method method = {};
 	method.method_data = ___make_wrapper_function(method_ptr);
 	method.free_func = godot::api->godot_free;
 	method.method = (__godot_wrapper_method)___get_wrapper_function(method_ptr);
 
-	godot_method_attributes attr = {};
+	godot_nativescript_method_attributes attr = {};
 	attr.rpc_type = rpc_type;
 
 	godot::nativescript_api->godot_nativescript_register_method(godot::_RegisterState::nativescript_handle,
@@ -320,7 +334,7 @@ void register_method(const char *name, M method_ptr, godot_method_rpc_mode rpc_t
 // User can specify a derived class D to register the method for, instead of it being inferred.
 template <class D, class B, class R, class... As>
 void register_method_explicit(const char *name, R (B::*method_ptr)(As...),
-		godot_method_rpc_mode rpc_type = GODOT_METHOD_RPC_MODE_DISABLED) {
+		godot_nativescript_method_rpc_mode rpc_type = GODOT_METHOD_RPC_MODE_DISABLED) {
 
 	static_assert(std::is_base_of<B, D>::value, "Explicit class must derive from method class");
 	register_method(name, static_cast<R (D::*)(As...)>(method_ptr), rpc_type);
@@ -391,27 +405,27 @@ struct _PropertyDefaultGetFunc {
 
 template <class T, class P>
 void register_property(const char *name, P(T::*var), P default_value,
-		godot_method_rpc_mode rpc_mode = GODOT_METHOD_RPC_MODE_DISABLED,
-		godot_property_usage_flags usage = GODOT_PROPERTY_USAGE_DEFAULT,
-		godot_property_hint hint = GODOT_PROPERTY_HINT_NONE, String hint_string = "") {
+		godot_nativescript_method_rpc_mode rpc_mode = GODOT_METHOD_RPC_MODE_DISABLED,
+		godot_nativescript_property_usage_flags usage = GODOT_PROPERTY_USAGE_DEFAULT,
+		godot_nativescript_property_hint hint = GODOT_PROPERTY_HINT_NONE, String hint_string = "") {
 
 	static_assert(T::___CLASS_IS_SCRIPT, "This function must only be used on custom classes");
 
 	Variant def_val = default_value;
 
-	usage = (godot_property_usage_flags)((int)usage | GODOT_PROPERTY_USAGE_SCRIPT_VARIABLE);
+	usage = (godot_nativescript_property_usage_flags)((int)usage | GODOT_PROPERTY_USAGE_SCRIPT_VARIABLE);
 
 	if (def_val.get_type() == Variant::OBJECT) {
 		Object *o = detail::get_wrapper<Object>(def_val.operator godot_object *());
 		if (o && o->is_class("Resource")) {
-			hint = (godot_property_hint)((int)hint | GODOT_PROPERTY_HINT_RESOURCE_TYPE);
+			hint = (godot_nativescript_property_hint)((int)hint | GODOT_PROPERTY_HINT_RESOURCE_TYPE);
 			hint_string = o->get_class();
 		}
 	}
 
 	godot_string *_hint_string = (godot_string *)&hint_string;
 
-	godot_property_attributes attr = {};
+	godot_nativescript_property_attributes attr = {};
 	if (def_val.get_type() == Variant::NIL) {
 		attr.type = Variant::OBJECT;
 	} else {
@@ -432,12 +446,12 @@ void register_property(const char *name, P(T::*var), P default_value,
 			(_PropertyDefaultGetFunc<T, P> *)godot::api->godot_alloc(sizeof(_PropertyDefaultGetFunc<T, P>));
 	wrapped_get->f = var;
 
-	godot_property_set_func set_func = {};
+	godot_nativescript_property_set_func set_func = {};
 	set_func.method_data = (void *)wrapped_set;
 	set_func.free_func = godot::api->godot_free;
 	set_func.set_func = &_PropertyDefaultSetFunc<T, P>::_wrapped_setter;
 
-	godot_property_get_func get_func = {};
+	godot_nativescript_property_get_func get_func = {};
 	get_func.method_data = (void *)wrapped_get;
 	get_func.free_func = godot::api->godot_free;
 	get_func.get_func = &_PropertyDefaultGetFunc<T, P>::_wrapped_getter;
@@ -448,9 +462,9 @@ void register_property(const char *name, P(T::*var), P default_value,
 
 template <class T, class P>
 void register_property(const char *name, void (T::*setter)(P), P (T::*getter)(), P default_value,
-		godot_method_rpc_mode rpc_mode = GODOT_METHOD_RPC_MODE_DISABLED,
-		godot_property_usage_flags usage = GODOT_PROPERTY_USAGE_DEFAULT,
-		godot_property_hint hint = GODOT_PROPERTY_HINT_NONE, String hint_string = "") {
+		godot_nativescript_method_rpc_mode rpc_mode = GODOT_METHOD_RPC_MODE_DISABLED,
+		godot_nativescript_property_usage_flags usage = GODOT_PROPERTY_USAGE_DEFAULT,
+		godot_nativescript_property_hint hint = GODOT_PROPERTY_HINT_NONE, String hint_string = "") {
 
 	static_assert(T::___CLASS_IS_SCRIPT, "This function must only be used on custom classes");
 
@@ -458,7 +472,7 @@ void register_property(const char *name, void (T::*setter)(P), P (T::*getter)(),
 
 	godot_string *_hint_string = (godot_string *)&hint_string;
 
-	godot_property_attributes attr = {};
+	godot_nativescript_property_attributes attr = {};
 	if (def_val.get_type() == Variant::NIL) {
 		attr.type = Variant::OBJECT;
 	} else {
@@ -476,12 +490,12 @@ void register_property(const char *name, void (T::*setter)(P), P (T::*getter)(),
 	_PropertyGetFunc<T, P> *wrapped_get = (_PropertyGetFunc<T, P> *)godot::api->godot_alloc(sizeof(_PropertyGetFunc<T, P>));
 	wrapped_get->f = getter;
 
-	godot_property_set_func set_func = {};
+	godot_nativescript_property_set_func set_func = {};
 	set_func.method_data = (void *)wrapped_set;
 	set_func.free_func = godot::api->godot_free;
 	set_func.set_func = &_PropertySetFunc<T, P>::_wrapped_setter;
 
-	godot_property_get_func get_func = {};
+	godot_nativescript_property_get_func get_func = {};
 	get_func.method_data = (void *)wrapped_get;
 	get_func.free_func = godot::api->godot_free;
 	get_func.get_func = &_PropertyGetFunc<T, P>::_wrapped_getter;
@@ -492,9 +506,27 @@ void register_property(const char *name, void (T::*setter)(P), P (T::*getter)(),
 
 template <class T, class P>
 void register_property(const char *name, void (T::*setter)(P), P (T::*getter)() const, P default_value,
-		godot_method_rpc_mode rpc_mode = GODOT_METHOD_RPC_MODE_DISABLED,
-		godot_property_usage_flags usage = GODOT_PROPERTY_USAGE_DEFAULT,
-		godot_property_hint hint = GODOT_PROPERTY_HINT_NONE, String hint_string = "") {
+		godot_nativescript_method_rpc_mode rpc_mode = GODOT_METHOD_RPC_MODE_DISABLED,
+		godot_nativescript_property_usage_flags usage = GODOT_PROPERTY_USAGE_DEFAULT,
+		godot_nativescript_property_hint hint = GODOT_PROPERTY_HINT_NONE, String hint_string = "") {
+
+	register_property(name, (void (T::*)(P))setter, (P(T::*)())getter, default_value, rpc_mode, usage, hint, hint_string);
+}
+
+template <class T, class P>
+void register_property(const char *name, void (T::*setter)(const P &), P (T::*getter)(), P default_value,
+		godot_nativescript_method_rpc_mode rpc_mode = GODOT_METHOD_RPC_MODE_DISABLED,
+		godot_nativescript_property_usage_flags usage = GODOT_PROPERTY_USAGE_DEFAULT,
+		godot_nativescript_property_hint hint = GODOT_PROPERTY_HINT_NONE, String hint_string = "") {
+
+	register_property(name, (void (T::*)(P))setter, (P(T::*)())getter, default_value, rpc_mode, usage, hint, hint_string);
+}
+
+template <class T, class P>
+void register_property(const char *name, void (T::*setter)(const P &), P (T::*getter)() const, P default_value,
+		godot_nativescript_method_rpc_mode rpc_mode = GODOT_METHOD_RPC_MODE_DISABLED,
+		godot_nativescript_property_usage_flags usage = GODOT_PROPERTY_USAGE_DEFAULT,
+		godot_nativescript_property_hint hint = GODOT_PROPERTY_HINT_NONE, String hint_string = "") {
 
 	register_property(name, setter, (P(T::*)())getter, default_value, rpc_mode, usage, hint, hint_string);
 }
@@ -503,15 +535,15 @@ template <class T>
 void register_signal(String name, Dictionary args = Dictionary()) {
 	static_assert(T::___CLASS_IS_SCRIPT, "This function must only be used on custom classes");
 
-	godot_signal signal = {};
+	godot_nativescript_signal signal = {};
 	signal.name = *(godot_string *)&name;
 	signal.num_args = args.size();
 	signal.num_default_args = 0;
 
 	// Need to check because malloc(0) is platform-dependent. Zero arguments will leave args to nullptr.
 	if (signal.num_args != 0) {
-		signal.args = (godot_signal_argument *)godot::api->godot_alloc(sizeof(godot_signal_argument) * signal.num_args);
-		memset((void *)signal.args, 0, sizeof(godot_signal_argument) * signal.num_args);
+		signal.args = (godot_nativescript_signal_argument *)godot::api->godot_alloc(sizeof(godot_nativescript_signal_argument) * signal.num_args);
+		memset((void *)signal.args, 0, sizeof(godot_nativescript_signal_argument) * signal.num_args);
 	}
 
 	for (int i = 0; i < signal.num_args; i++) {
@@ -551,7 +583,7 @@ T *Object::cast_to(const Object *obj) {
 		return nullptr;
 
 	if (T::___CLASS_IS_SCRIPT) {
-		size_t have_tag = (size_t)godot::nativescript_1_1_api->godot_nativescript_get_type_tag(obj->_owner);
+		size_t have_tag = (size_t)godot::nativescript_api->godot_nativescript_get_type_tag(obj->_owner);
 		if (have_tag) {
 			if (!godot::_TagDB::is_type_known((size_t)have_tag)) {
 				have_tag = 0;
@@ -566,7 +598,7 @@ T *Object::cast_to(const Object *obj) {
 			return detail::get_custom_class_instance<T>(obj);
 		}
 	} else {
-		if (godot::core_1_2_api->godot_object_cast_to(obj->_owner, (void *)T::___get_id())) {
+		if (godot::api->godot_object_cast_to(obj->_owner, (void *)T::___get_id())) {
 			return (T *)obj;
 		}
 	}

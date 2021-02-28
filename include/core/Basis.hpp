@@ -1,428 +1,311 @@
-#ifndef BASIS_H
-#define BASIS_H
+#ifndef GODOT_BASIS_HPP
+#define GODOT_BASIS_HPP
 
-#include <gdnative/basis.h>
-
-#include "Defs.hpp"
-
-#include "Vector3.hpp"
+#include <Math.hpp>
+#include <Quat.hpp>
+#include <Vector3.hpp>
 
 namespace godot {
 
-class Quat;
-
 class Basis {
-private:
-	static const Basis IDENTITY;
-	static const Basis FLIP_X;
-	static const Basis FLIP_Y;
-	static const Basis FLIP_Z;
-
-	// This helper template is for mimicking the behavior difference between the engine
-	// and script interfaces that logically script sees matrices as column major, while
-	// the engine stores them in row major to efficiently take advantage of SIMD
-	// instructions in case of matrix-vector multiplications.
-	// With this helper template native scripts see the data as if it was column major
-	// without actually transposing the basis matrix at the script-engine boundary.
-	template <int column>
-	class ColumnVector3 {
-	private:
-		template <int column1, int component>
-		class ColumnVectorComponent {
-		private:
-			Vector3 elements[3];
-
-		protected:
-			inline ColumnVectorComponent<column1, component> &operator=(const ColumnVectorComponent<column1, component> &p_value) {
-				return *this = real_t(p_value);
-			}
-
-			inline ColumnVectorComponent(const ColumnVectorComponent<column1, component> &p_value) {
-				*this = real_t(p_value);
-			}
-
-			inline ColumnVectorComponent<column1, component> &operator=(const real_t &p_value) {
-				elements[component][column1] = p_value;
-				return *this;
-			}
-
-			inline operator real_t() const {
-				return elements[component][column1];
-			}
-		};
-
-	public:
-		enum Axis {
-			AXIS_X,
-			AXIS_Y,
-			AXIS_Z,
-		};
-
-		union {
-			ColumnVectorComponent<column, 0> x;
-			ColumnVectorComponent<column, 1> y;
-			ColumnVectorComponent<column, 2> z;
-
-			Vector3 elements[3]; // Not for direct access, use [] operator instead
-		};
-
-		inline ColumnVector3<column> &operator=(const ColumnVector3<column> &p_value) {
-			return *this = Vector3(p_value);
-		}
-
-		inline ColumnVector3(const ColumnVector3<column> &p_value) {
-			*this = Vector3(p_value);
-		}
-
-		inline ColumnVector3<column> &operator=(const Vector3 &p_value) {
-			elements[0][column] = p_value.x;
-			elements[1][column] = p_value.y;
-			elements[2][column] = p_value.z;
-			return *this;
-		}
-
-		inline operator Vector3() const {
-			return Vector3(elements[0][column], elements[1][column], elements[2][column]);
-		}
-
-		// Unfortunately, we also need to replicate the other interfaces of Vector3 in
-		// order for being able to directly operate on these "meta-Vector3" objects without
-		// an explicit cast or an intermediate assignment to a real Vector3 object.
-
-		inline const real_t &operator[](int p_axis) const {
-			return elements[p_axis][column];
-		}
-
-		inline real_t &operator[](int p_axis) {
-			return elements[p_axis][column];
-		}
-
-		inline ColumnVector3<column> &operator+=(const Vector3 &p_v) {
-			return *this = *this + p_v;
-		}
-
-		inline Vector3 operator+(const Vector3 &p_v) const {
-			return Vector3(*this) + p_v;
-		}
-
-		inline ColumnVector3<column> &operator-=(const Vector3 &p_v) {
-			return *this = *this - p_v;
-		}
-
-		inline Vector3 operator-(const Vector3 &p_v) const {
-			return Vector3(*this) - p_v;
-		}
-
-		inline ColumnVector3<column> &operator*=(const Vector3 &p_v) {
-			return *this = *this * p_v;
-		}
-
-		inline Vector3 operator*(const Vector3 &p_v) const {
-			return Vector3(*this) * p_v;
-		}
-
-		inline ColumnVector3<column> &operator/=(const Vector3 &p_v) {
-			return *this = *this / p_v;
-		}
-
-		inline Vector3 operator/(const Vector3 &p_v) const {
-			return Vector3(*this) / p_v;
-		}
-
-		inline ColumnVector3<column> &operator*=(real_t p_scalar) {
-			return *this = *this * p_scalar;
-		}
-
-		inline Vector3 operator*(real_t p_scalar) const {
-			return Vector3(*this) * p_scalar;
-		}
-
-		inline ColumnVector3<column> &operator/=(real_t p_scalar) {
-			return *this = *this / p_scalar;
-		}
-
-		inline Vector3 operator/(real_t p_scalar) const {
-			return Vector3(*this) / p_scalar;
-		}
-
-		inline Vector3 operator-() const {
-			return -Vector3(*this);
-		}
-
-		inline bool operator==(const Vector3 &p_v) const {
-			return Vector3(*this) == p_v;
-		}
-
-		inline bool operator!=(const Vector3 &p_v) const {
-			return Vector3(*this) != p_v;
-		}
-
-		inline bool operator<(const Vector3 &p_v) const {
-			return Vector3(*this) < p_v;
-		}
-
-		inline bool operator<=(const Vector3 &p_v) const {
-			return Vector3(*this) <= p_v;
-		}
-
-		inline Vector3 abs() const {
-			return Vector3(*this).abs();
-		}
-
-		inline Vector3 ceil() const {
-			return Vector3(*this).ceil();
-		}
-
-		inline Vector3 cross(const Vector3 &b) const {
-			return Vector3(*this).cross(b);
-		}
-
-		inline Vector3 linear_interpolate(const Vector3 &p_b, real_t p_t) const {
-			return Vector3(*this).linear_interpolate(p_b, p_t);
-		}
-
-		inline Vector3 cubic_interpolate(const Vector3 &b, const Vector3 &pre_a, const Vector3 &post_b, const real_t t) const {
-			return Vector3(*this).cubic_interpolate(b, pre_a, post_b, t);
-		}
-
-		inline Vector3 bounce(const Vector3 &p_normal) const {
-			return Vector3(*this).bounce(p_normal);
-		}
-
-		inline real_t length() const {
-			return Vector3(*this).length();
-		}
-
-		inline real_t length_squared() const {
-			return Vector3(*this).length_squared();
-		}
-
-		inline real_t distance_squared_to(const Vector3 &b) const {
-			return Vector3(*this).distance_squared_to(b);
-		}
-
-		inline real_t distance_to(const Vector3 &b) const {
-			return Vector3(*this).distance_to(b);
-		}
-
-		inline real_t dot(const Vector3 &b) const {
-			return Vector3(*this).dot(b);
-		}
-
-		inline real_t angle_to(const Vector3 &b) const {
-			return Vector3(*this).angle_to(b);
-		}
-
-		inline Vector3 floor() const {
-			return Vector3(*this).floor();
-		}
-
-		inline Vector3 inverse() const {
-			return Vector3(*this).inverse();
-		}
-
-		inline bool is_normalized() const {
-			return Vector3(*this).is_normalized();
-		}
-
-		inline Basis outer(const Vector3 &b) const {
-			return Vector3(*this).outer(b);
-		}
-
-		inline int max_axis() const {
-			return Vector3(*this).max_axis();
-		}
-
-		inline int min_axis() const {
-			return Vector3(*this).min_axis();
-		}
-
-		inline void normalize() {
-			Vector3 v = *this;
-			v.normalize();
-			*this = v;
-		}
-
-		inline Vector3 normalized() const {
-			return Vector3(*this).normalized();
-		}
-
-		inline Vector3 reflect(const Vector3 &by) const {
-			return Vector3(*this).reflect(by);
-		}
-
-		inline Vector3 rotated(const Vector3 &axis, const real_t phi) const {
-			return Vector3(*this).rotated(axis, phi);
-		}
-
-		inline void rotate(const Vector3 &p_axis, real_t p_phi) {
-			Vector3 v = *this;
-			v.rotate(p_axis, p_phi);
-			*this = v;
-		}
-
-		inline Vector3 slide(const Vector3 &by) const {
-			return Vector3(*this).slide(by);
-		}
-
-		inline void snap(real_t p_val) {
-			Vector3 v = *this;
-			v.snap(p_val);
-			*this = v;
-		}
-
-		inline Vector3 snapped(const float by) {
-			return Vector3(*this).snapped(by);
-		}
-
-		inline operator String() const {
-			return String(Vector3(*this));
-		}
-	};
-
 public:
-	union {
-		ColumnVector3<0> x;
-		ColumnVector3<1> y;
-		ColumnVector3<2> z;
-
-		Vector3 elements[3]; // Not for direct access, use [] operator instead
+	Vector3 elements[3] = {
+		Vector3(1, 0, 0),
+		Vector3(0, 1, 0),
+		Vector3(0, 0, 1)
 	};
 
-	inline Basis(const Basis &p_basis) {
-		elements[0] = p_basis.elements[0];
-		elements[1] = p_basis.elements[1];
-		elements[2] = p_basis.elements[2];
+	inline const Vector3 &operator[](int axis) const {
+		return elements[axis];
 	}
-
-	inline Basis &operator=(const Basis &p_basis) {
-		elements[0] = p_basis.elements[0];
-		elements[1] = p_basis.elements[1];
-		elements[2] = p_basis.elements[2];
-		return *this;
-	}
-
-	Basis(const Quat &p_quat); // euler
-	Basis(const Vector3 &p_euler); // euler
-	Basis(const Vector3 &p_axis, real_t p_phi);
-
-	Basis(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2);
-
-	Basis(real_t xx, real_t xy, real_t xz, real_t yx, real_t yy, real_t yz, real_t zx, real_t zy, real_t zz);
-
-	Basis();
-
-	const Vector3 operator[](int axis) const {
-		return get_axis(axis);
-	}
-
-	ColumnVector3<0> &operator[](int axis) {
-		// We need to do a little pointer magic to get this to work, because the
-		// ColumnVector3 template takes the axis as a template parameter.
-		// Don't touch this unless you're sure what you're doing!
-		return (reinterpret_cast<Basis *>(reinterpret_cast<real_t *>(this) + axis))->x;
+	inline Vector3 &operator[](int axis) {
+		return elements[axis];
 	}
 
 	void invert();
-
-	bool isequal_approx(const Basis &a, const Basis &b) const;
-
-	bool is_orthogonal() const;
-
-	bool is_rotation() const;
-
 	void transpose();
 
 	Basis inverse() const;
-
 	Basis transposed() const;
 
-	real_t determinant() const;
+	inline real_t determinant() const;
 
-	Vector3 get_axis(int p_axis) const;
+	void from_z(const Vector3 &p_z);
 
-	void set_axis(int p_axis, const Vector3 &p_value);
+	inline Vector3 get_axis(int p_axis) const {
+		// get actual basis axis (elements is transposed for performance)
+		return Vector3(elements[0][p_axis], elements[1][p_axis], elements[2][p_axis]);
+	}
+	inline void set_axis(int p_axis, const Vector3 &p_value) {
+		// get actual basis axis (elements is transposed for performance)
+		elements[0][p_axis] = p_value.x;
+		elements[1][p_axis] = p_value.y;
+		elements[2][p_axis] = p_value.z;
+	}
 
 	void rotate(const Vector3 &p_axis, real_t p_phi);
-
 	Basis rotated(const Vector3 &p_axis, real_t p_phi) const;
 
-	void scale(const Vector3 &p_scale);
+	void rotate_local(const Vector3 &p_axis, real_t p_phi);
+	Basis rotated_local(const Vector3 &p_axis, real_t p_phi) const;
 
-	Basis scaled(const Vector3 &p_scale) const;
+	void rotate(const Vector3 &p_euler);
+	Basis rotated(const Vector3 &p_euler) const;
 
-	Vector3 get_scale() const;
+	void rotate(const Quat &p_quat);
+	Basis rotated(const Quat &p_quat) const;
 
-	Basis slerp(Basis b, float t) const;
+	Vector3 get_rotation_euler() const;
+	void get_rotation_axis_angle(Vector3 &p_axis, real_t &p_angle) const;
+	void get_rotation_axis_angle_local(Vector3 &p_axis, real_t &p_angle) const;
+	Quat get_rotation_quat() const;
+	Vector3 get_rotation() const { return get_rotation_euler(); };
+
+	Vector3 rotref_posscale_decomposition(Basis &rotref) const;
 
 	Vector3 get_euler_xyz() const;
 	void set_euler_xyz(const Vector3 &p_euler);
+
+	Vector3 get_euler_xzy() const;
+	void set_euler_xzy(const Vector3 &p_euler);
+
+	Vector3 get_euler_yzx() const;
+	void set_euler_yzx(const Vector3 &p_euler);
+
 	Vector3 get_euler_yxz() const;
 	void set_euler_yxz(const Vector3 &p_euler);
 
-	inline Vector3 get_euler() const { return get_euler_yxz(); }
-	inline void set_euler(const Vector3 &p_euler) { set_euler_yxz(p_euler); }
+	Vector3 get_euler_zxy() const;
+	void set_euler_zxy(const Vector3 &p_euler);
+
+	Vector3 get_euler_zyx() const;
+	void set_euler_zyx(const Vector3 &p_euler);
+
+	Quat get_quat() const;
+	void set_quat(const Quat &p_quat);
+
+	Vector3 get_euler() const { return get_euler_yxz(); }
+	void set_euler(const Vector3 &p_euler) { set_euler_yxz(p_euler); }
+
+	void get_axis_angle(Vector3 &r_axis, real_t &r_angle) const;
+	void set_axis_angle(const Vector3 &p_axis, real_t p_phi);
+
+	void scale(const Vector3 &p_scale);
+	Basis scaled(const Vector3 &p_scale) const;
+
+	void scale_local(const Vector3 &p_scale);
+	Basis scaled_local(const Vector3 &p_scale) const;
+
+	void make_scale_uniform();
+	float get_uniform_scale() const;
+
+	Vector3 get_scale() const;
+	Vector3 get_scale_abs() const;
+	Vector3 get_scale_local() const;
+
+	void set_axis_angle_scale(const Vector3 &p_axis, real_t p_phi, const Vector3 &p_scale);
+	void set_euler_scale(const Vector3 &p_euler, const Vector3 &p_scale);
+	void set_quat_scale(const Quat &p_quat, const Vector3 &p_scale);
 
 	// transposed dot products
-	real_t tdotx(const Vector3 &v) const;
-	real_t tdoty(const Vector3 &v) const;
-	real_t tdotz(const Vector3 &v) const;
+	inline real_t tdotx(const Vector3 &v) const {
+		return elements[0][0] * v[0] + elements[1][0] * v[1] + elements[2][0] * v[2];
+	}
+	inline real_t tdoty(const Vector3 &v) const {
+		return elements[0][1] * v[0] + elements[1][1] * v[1] + elements[2][1] * v[2];
+	}
+	inline real_t tdotz(const Vector3 &v) const {
+		return elements[0][2] * v[0] + elements[1][2] * v[1] + elements[2][2] * v[2];
+	}
+
+	bool is_equal_approx(const Basis &p_basis) const;
 
 	bool operator==(const Basis &p_matrix) const;
-
 	bool operator!=(const Basis &p_matrix) const;
 
-	Vector3 xform(const Vector3 &p_vector) const;
+	inline Vector3 xform(const Vector3 &p_vector) const;
+	inline Vector3 xform_inv(const Vector3 &p_vector) const;
+	inline void operator*=(const Basis &p_matrix);
+	inline Basis operator*(const Basis &p_matrix) const;
+	inline void operator+=(const Basis &p_matrix);
+	inline Basis operator+(const Basis &p_matrix) const;
+	inline void operator-=(const Basis &p_matrix);
+	inline Basis operator-(const Basis &p_matrix) const;
+	inline void operator*=(real_t p_val);
+	inline Basis operator*(real_t p_val) const;
 
-	Vector3 xform_inv(const Vector3 &p_vector) const;
-	void operator*=(const Basis &p_matrix);
+	int get_orthogonal_index() const;
+	void set_orthogonal_index(int p_index);
 
-	Basis operator*(const Basis &p_matrix) const;
+	void set_diagonal(const Vector3 &p_diag);
 
-	void operator+=(const Basis &p_matrix);
+	bool is_orthogonal() const;
+	bool is_diagonal() const;
+	bool is_rotation() const;
 
-	Basis operator+(const Basis &p_matrix) const;
-
-	void operator-=(const Basis &p_matrix);
-
-	Basis operator-(const Basis &p_matrix) const;
-
-	void operator*=(real_t p_val);
-
-	Basis operator*(real_t p_val) const;
-
-	int get_orthogonal_index() const; // down below
-
-	void set_orthogonal_index(int p_index); // down below
+	Basis slerp(const Basis &p_to, const real_t &p_weight) const;
+	void rotate_sh(real_t *p_values);
 
 	operator String() const;
 
-	void get_axis_and_angle(Vector3 &r_axis, real_t &r_angle) const;
-
 	/* create / set */
 
-	void set(real_t xx, real_t xy, real_t xz, real_t yx, real_t yy, real_t yz, real_t zx, real_t zy, real_t zz);
+	inline void set(real_t xx, real_t xy, real_t xz, real_t yx, real_t yy, real_t yz, real_t zx, real_t zy, real_t zz) {
+		elements[0][0] = xx;
+		elements[0][1] = xy;
+		elements[0][2] = xz;
+		elements[1][0] = yx;
+		elements[1][1] = yy;
+		elements[1][2] = yz;
+		elements[2][0] = zx;
+		elements[2][1] = zy;
+		elements[2][2] = zz;
+	}
+	inline void set(const Vector3 &p_x, const Vector3 &p_y, const Vector3 &p_z) {
+		set_axis(0, p_x);
+		set_axis(1, p_y);
+		set_axis(2, p_z);
+	}
+	inline Vector3 get_column(int i) const {
+		return Vector3(elements[0][i], elements[1][i], elements[2][i]);
+	}
 
-	Vector3 get_column(int i) const;
+	inline Vector3 get_row(int i) const {
+		return Vector3(elements[i][0], elements[i][1], elements[i][2]);
+	}
+	inline Vector3 get_main_diagonal() const {
+		return Vector3(elements[0][0], elements[1][1], elements[2][2]);
+	}
 
-	Vector3 get_row(int i) const;
-	Vector3 get_main_diagonal() const;
+	inline void set_row(int i, const Vector3 &p_row) {
+		elements[i][0] = p_row.x;
+		elements[i][1] = p_row.y;
+		elements[i][2] = p_row.z;
+	}
 
-	void set_row(int i, const Vector3 &p_row);
+	inline void set_zero() {
+		elements[0].zero();
+		elements[1].zero();
+		elements[2].zero();
+	}
 
-	Basis transpose_xform(const Basis &m) const;
+	inline Basis transpose_xform(const Basis &m) const {
+		return Basis(
+				elements[0].x * m[0].x + elements[1].x * m[1].x + elements[2].x * m[2].x,
+				elements[0].x * m[0].y + elements[1].x * m[1].y + elements[2].x * m[2].y,
+				elements[0].x * m[0].z + elements[1].x * m[1].z + elements[2].x * m[2].z,
+				elements[0].y * m[0].x + elements[1].y * m[1].x + elements[2].y * m[2].x,
+				elements[0].y * m[0].y + elements[1].y * m[1].y + elements[2].y * m[2].y,
+				elements[0].y * m[0].z + elements[1].y * m[1].z + elements[2].y * m[2].z,
+				elements[0].z * m[0].x + elements[1].z * m[1].x + elements[2].z * m[2].x,
+				elements[0].z * m[0].y + elements[1].z * m[1].y + elements[2].z * m[2].y,
+				elements[0].z * m[0].z + elements[1].z * m[1].z + elements[2].z * m[2].z);
+	}
+	Basis(real_t xx, real_t xy, real_t xz, real_t yx, real_t yy, real_t yz, real_t zx, real_t zy, real_t zz) {
+		set(xx, xy, xz, yx, yy, yz, zx, zy, zz);
+	}
+	inline explicit Basis(const godot_basis &p_godot_basis) {
+		*this = *((Basis *)&p_godot_basis);
+	}
 
 	void orthonormalize();
-
 	Basis orthonormalized() const;
 
+#ifdef MATH_CHECKS
 	bool is_symmetric() const;
-
+#endif
 	Basis diagonalize();
 
-	operator Quat() const;
+	operator Quat() const { return get_quat(); }
+
+	Basis(const Quat &p_quat) { set_quat(p_quat); };
+	Basis(const Quat &p_quat, const Vector3 &p_scale) { set_quat_scale(p_quat, p_scale); }
+
+	Basis(const Vector3 &p_euler) { set_euler(p_euler); }
+	Basis(const Vector3 &p_euler, const Vector3 &p_scale) { set_euler_scale(p_euler, p_scale); }
+
+	Basis(const Vector3 &p_axis, real_t p_phi) { set_axis_angle(p_axis, p_phi); }
+	Basis(const Vector3 &p_axis, real_t p_phi, const Vector3 &p_scale) { set_axis_angle_scale(p_axis, p_phi, p_scale); }
+
+	inline Basis(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2) {
+		elements[0] = row0;
+		elements[1] = row1;
+		elements[2] = row2;
+	}
+
+	inline Basis() {}
 };
+
+inline void Basis::operator*=(const Basis &p_matrix) {
+	set(
+			p_matrix.tdotx(elements[0]), p_matrix.tdoty(elements[0]), p_matrix.tdotz(elements[0]),
+			p_matrix.tdotx(elements[1]), p_matrix.tdoty(elements[1]), p_matrix.tdotz(elements[1]),
+			p_matrix.tdotx(elements[2]), p_matrix.tdoty(elements[2]), p_matrix.tdotz(elements[2]));
+}
+
+inline Basis Basis::operator*(const Basis &p_matrix) const {
+	return Basis(
+			p_matrix.tdotx(elements[0]), p_matrix.tdoty(elements[0]), p_matrix.tdotz(elements[0]),
+			p_matrix.tdotx(elements[1]), p_matrix.tdoty(elements[1]), p_matrix.tdotz(elements[1]),
+			p_matrix.tdotx(elements[2]), p_matrix.tdoty(elements[2]), p_matrix.tdotz(elements[2]));
+}
+
+inline void Basis::operator+=(const Basis &p_matrix) {
+	elements[0] += p_matrix.elements[0];
+	elements[1] += p_matrix.elements[1];
+	elements[2] += p_matrix.elements[2];
+}
+
+inline Basis Basis::operator+(const Basis &p_matrix) const {
+	Basis ret(*this);
+	ret += p_matrix;
+	return ret;
+}
+
+inline void Basis::operator-=(const Basis &p_matrix) {
+	elements[0] -= p_matrix.elements[0];
+	elements[1] -= p_matrix.elements[1];
+	elements[2] -= p_matrix.elements[2];
+}
+
+inline Basis Basis::operator-(const Basis &p_matrix) const {
+	Basis ret(*this);
+	ret -= p_matrix;
+	return ret;
+}
+
+inline void Basis::operator*=(real_t p_val) {
+	elements[0] *= p_val;
+	elements[1] *= p_val;
+	elements[2] *= p_val;
+}
+
+inline Basis Basis::operator*(real_t p_val) const {
+	Basis ret(*this);
+	ret *= p_val;
+	return ret;
+}
+
+Vector3 Basis::xform(const Vector3 &p_vector) const {
+	return Vector3(
+			elements[0].dot(p_vector),
+			elements[1].dot(p_vector),
+			elements[2].dot(p_vector));
+}
+
+Vector3 Basis::xform_inv(const Vector3 &p_vector) const {
+	return Vector3(
+			(elements[0][0] * p_vector.x) + (elements[1][0] * p_vector.y) + (elements[2][0] * p_vector.z),
+			(elements[0][1] * p_vector.x) + (elements[1][1] * p_vector.y) + (elements[2][1] * p_vector.z),
+			(elements[0][2] * p_vector.x) + (elements[1][2] * p_vector.y) + (elements[2][2] * p_vector.z));
+}
+
+real_t Basis::determinant() const {
+	return elements[0][0] * (elements[1][1] * elements[2][2] - elements[2][1] * elements[1][2]) -
+		   elements[1][0] * (elements[0][1] * elements[2][2] - elements[2][1] * elements[0][2]) +
+		   elements[2][0] * (elements[0][1] * elements[1][2] - elements[1][1] * elements[0][2]);
+}
 
 } // namespace godot
 
-#endif // BASIS_H
+#endif // GODOT_BASIS_HPP

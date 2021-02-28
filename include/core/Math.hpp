@@ -1,7 +1,8 @@
 #ifndef GODOT_MATH_H
 #define GODOT_MATH_H
 
-#include "Defs.hpp"
+#include <Defs.hpp>
+
 #include <cmath>
 
 namespace godot {
@@ -17,11 +18,52 @@ inline float fmod(float p_x, float p_y) {
 	return ::fmodf(p_x, p_y);
 }
 
+inline double fposmod(double p_x, double p_y) {
+	double value = Math::fmod(p_x, p_y);
+	if ((value < 0 && p_y > 0) || (value > 0 && p_y < 0)) {
+		value += p_y;
+	}
+	value += 0.0;
+	return value;
+}
+inline float fposmod(float p_x, float p_y) {
+	float value = Math::fmod(p_x, p_y);
+	if ((value < 0 && p_y > 0) || (value > 0 && p_y < 0)) {
+		value += p_y;
+	}
+	value += 0.0;
+	return value;
+}
+
+inline float fposmodp(float p_x, float p_y) {
+	float value = Math::fmod(p_x, p_y);
+	if (value < 0) {
+		value += p_y;
+	}
+	value += 0.0;
+	return value;
+}
+inline double fposmodp(double p_x, double p_y) {
+	double value = Math::fmod(p_x, p_y);
+	if (value < 0) {
+		value += p_y;
+	}
+	value += 0.0;
+	return value;
+}
+
 inline double floor(double p_x) {
 	return ::floor(p_x);
 }
 inline float floor(float p_x) {
 	return ::floorf(p_x);
+}
+
+inline double ceil(double p_x) {
+	return ::ceil(p_x);
+}
+inline float ceil(float p_x) {
+	return ::ceilf(p_x);
 }
 
 inline double exp(double p_x) {
@@ -52,6 +94,62 @@ inline float tan(float p_x) {
 	return ::tanf(p_x);
 }
 
+inline double sinh(double p_x) {
+	return ::sinh(p_x);
+}
+inline float sinh(float p_x) {
+	return ::sinhf(p_x);
+}
+
+inline float sinc(float p_x) {
+	return p_x == 0 ? 1 : ::sin(p_x) / p_x;
+}
+inline double sinc(double p_x) {
+	return p_x == 0 ? 1 : ::sin(p_x) / p_x;
+}
+
+inline float sincn(float p_x) {
+	return sinc(Math_PI * p_x);
+}
+inline double sincn(double p_x) {
+	return sinc(Math_PI * p_x);
+}
+
+inline double cosh(double p_x) {
+	return ::cosh(p_x);
+}
+inline float cosh(float p_x) {
+	return ::coshf(p_x);
+}
+
+inline double tanh(double p_x) {
+	return ::tanh(p_x);
+}
+inline float tanh(float p_x) {
+	return ::tanhf(p_x);
+}
+
+inline double asin(double p_x) {
+	return ::asin(p_x);
+}
+inline float asin(float p_x) {
+	return ::asinf(p_x);
+}
+
+inline double acos(double p_x) {
+	return ::acos(p_x);
+}
+inline float acos(float p_x) {
+	return ::acosf(p_x);
+}
+
+inline double atan(double p_x) {
+	return ::atan(p_x);
+}
+inline float atan(float p_x) {
+	return ::atanf(p_x);
+}
+
 inline double atan2(double p_y, double p_x) {
 	return ::atan2(p_y, p_x);
 }
@@ -64,6 +162,20 @@ inline double sqrt(double p_x) {
 }
 inline float sqrt(float p_x) {
 	return ::sqrtf(p_x);
+}
+
+inline double pow(double p_x, double p_y) {
+	return ::pow(p_x, p_y);
+}
+inline float pow(float p_x, float p_y) {
+	return ::powf(p_x, p_y);
+}
+
+inline double log(double p_x) {
+	return ::log(p_x);
+}
+inline float log(float p_x) {
+	return ::logf(p_x);
 }
 
 inline float lerp(float minv, float maxv, float t) {
@@ -108,6 +220,11 @@ inline T max(T a, T b) {
 template <typename T>
 inline T sign(T x) {
 	return static_cast<T>(x < 0 ? -1 : 1);
+}
+
+template <typename T>
+inline T abs(T x) {
+	return std::abs(x);
 }
 
 inline double deg2rad(double p_y) {
@@ -244,6 +361,37 @@ inline unsigned int next_power_of_2(unsigned int x) {
 	x |= x >> 16;
 
 	return ++x;
+}
+
+// This function should be as fast as possible and rounding mode should not matter.
+inline int fast_ftoi(float a) {
+	static int b;
+
+#if (defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0603) || WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP // windows 8 phone?
+	b = (int)((a > 0.0) ? (a + 0.5) : (a - 0.5));
+
+#elif defined(_MSC_VER) && _MSC_VER < 1800
+	__asm fld a __asm fistp b
+	/*#elif defined( __GNUC__ ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
+	// use AT&T inline assembly style, document that
+	// we use memory as output (=m) and input (m)
+	__asm__ __volatile__ (
+	"flds %1        \n\t"
+	"fistpl %0      \n\t"
+	: "=m" (b)
+	: "m" (a));*/
+
+#else
+	b = lrintf(a); //assuming everything but msvc 2012 or earlier has lrint
+#endif
+	return b;
+}
+
+inline double snapped(double p_value, double p_step) {
+	if (p_step != 0) {
+		p_value = Math::floor(p_value / p_step + 0.5) * p_step;
+	}
+	return p_value;
 }
 
 } // namespace Math
