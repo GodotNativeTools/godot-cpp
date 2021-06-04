@@ -275,7 +275,7 @@ Godot headers repository for more information.
 
 #### HTML5
 
-GDNative is supported on [specific exports](https://docs.godotengine.org/en/latest/tutorials/export/exporting_for_web.html#export-options) for the HTML5 platform since Godot `3.2.4`. Linking webassembly modules is currently underspecified in the standard, but [emscripten](https://emscripten.org/), which Godot uses to build the HTML5 version, implements its own linking system.
+GDNative is supported on [specific exports](https://docs.godotengine.org/en/latest/tutorials/export/exporting_for_web.html#export-options) for the HTML5 platform since Godot `3.3`. Linking webassembly modules is currently underspecified in the standard, but [emscripten](https://emscripten.org/), which Godot uses to build the HTML5 version, implements its own linking system.
 
 To build GDNative libraries you wwill need a recent version of [emscripten](https://emscripten.org/).
 
