@@ -7,7 +7,6 @@
 #include "GodotGlobal.hpp"
 #include "Object.hpp"
 
-#include <iostream>
 
 namespace godot {
 
