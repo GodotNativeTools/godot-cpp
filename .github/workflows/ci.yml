@@ -128,18 +128,18 @@ jobs:
 
       - name: Build godot-cpp
         run: |
-          scons target=release generate_bindings=yes -j $(sysctl -n hw.logicalcpu)
+          scons target=release macos_arch=x86_64 generate_bindings=yes -j $(sysctl -n hw.logicalcpu)
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2.2.4
         with:
           name: godot-cpp-macos-x86_64-release
-          path: bin/libgodot-cpp.osx.release.64.a
+          path: bin/libgodot-cpp.osx.release.x86_64.a
           if-no-files-found: error
 
       - name: Build test GDNative library
         run: |
-          scons target=release platform=osx bits=64 -j $(sysctl -n hw.logicalcpu) -C test
+          scons target=release platform=osx macos_arch=x86_64 -j $(sysctl -n hw.logicalcpu) -C test
 
       - name: Run test GDNative library
         run: |

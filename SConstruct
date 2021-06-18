@@ -149,6 +149,12 @@ opts.Add(EnumVariable(
     'arm64',
     ['armv7', 'arm64', 'x86_64']
 ))
+opts.Add(EnumVariable(
+    'macos_arch',
+    'Target macOS architecture',
+    'universal',
+    ['universal', 'arm64', 'x86_64']
+))
 opts.Add(BoolVariable(
     'ios_simulator',
     'Target iOS Simulator',
@@ -217,14 +223,28 @@ elif env['platform'] == 'osx':
             'Only 64-bit builds are supported for the macOS target.'
         )
 
-    env.Append(CCFLAGS=['-std=c++14', '-arch', 'x86_64'])
+    if env['macos_arch'] == 'universal':
+        env.Append(CCFLAGS=['-std=c++14', '-arch', 'x86_64', '-arch', 'arm64'])
+    else:
+        env.Append(CCFLAGS=['-std=c++14', '-arch', env['macos_arch']])
 
     if env['macos_deployment_target'] != 'default':
         env.Append(CCFLAGS=['-mmacosx-version-min=' + env['macos_deployment_target']])
 
+    if env['macos_arch'] == 'universal':
+        env.Append(LINKFLAGS=[
+            '-arch',
+            'x86_64',
+            '-arch',
+            'arm64'
+        ])
+    else:
+        env.Append(LINKFLAGS=[
+            '-arch',
+            env['macos_arch']
+        ])
+
     env.Append(LINKFLAGS=[
-        '-arch',
-        'x86_64',
         '-framework',
         'Cocoa',
         '-Wl,-undefined,dynamic_lookup',
@@ -439,10 +459,12 @@ add_sources(sources, 'src/gen', 'cpp')
 arch_suffix = env['bits']
 if env['platform'] == 'android':
     arch_suffix = env['android_arch']
-if env['platform'] == 'ios':
+elif env['platform'] == 'ios':
     arch_suffix = env['ios_arch']
-if env['platform'] == 'javascript':
+elif env['platform'] == 'javascript':
     arch_suffix = 'wasm'
+elif env['platform'] == 'osx':
+    arch_suffix = env['macos_arch']
 
 library = env.StaticLibrary(
     target='bin/' + 'libgodot-cpp.{}.{}.{}{}'.format(

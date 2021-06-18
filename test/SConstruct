@@ -28,6 +28,7 @@ opts.Add(EnumVariable('bits', 'Target platform bits', '64', ('32', '64')))
 opts.Add(BoolVariable('use_llvm', "Use the LLVM / Clang compiler", 'no'))
 opts.Add(PathVariable('target_path', 'The path where the lib is installed.', 'bin/', PathVariable.PathAccept))
 opts.Add(PathVariable('target_name', 'The library name.', 'libgdexample', PathVariable.PathAccept))
+opts.Add(EnumVariable('macos_arch', 'Target macOS architecture', 'universal', ['universal', 'arm64', 'x86_64']))
 
 # Local dependency paths, adapt them to your setup
 godot_headers_path = "../godot-headers/"
@@ -75,11 +76,15 @@ if env['platform'] == '':
 
 # Check our platform specifics
 if env['platform'] == "osx":
+    if env['macos_arch'] == 'universal':
+        env.Append(CCFLAGS=['-std=c++17', '-arch', 'x86_64', '-arch', 'arm64'])
+        env.Append(LINKFLAGS=['-arch', 'x86_64', '-arch', 'arm64'])
+    else:
+        env.Append(CCFLAGS=['-std=c++17', '-arch', env['macos_arch']])
+        env.Append(LINKFLAGS=['-arch', env['macos_arch']])
+
     env['target_path'] += 'osx/'
     cpp_library += '.osx'
-    env.Append(CCFLAGS=['-arch', 'x86_64'])
-    env.Append(CXXFLAGS=['-std=c++17'])
-    env.Append(LINKFLAGS=['-arch', 'x86_64'])
     if env['target'] in ('debug', 'd'):
         env.Append(CCFLAGS=['-g', '-O2'])
     else:
@@ -117,7 +122,10 @@ if env['target'] in ('debug', 'd'):
 else:
     cpp_library += '.release'
 
-cpp_library += '.' + str(bits)
+if env['platform'] == 'osx':
+    cpp_library += '.' + env['macos_arch']
+else:
+    cpp_library += '.' + str(bits)
 
 # make sure our binding library is properly includes
 env.Append(CPPPATH=['.', godot_headers_path, cpp_bindings_path + 'include/', cpp_bindings_path + 'include/core/', cpp_bindings_path + 'include/gen/'])
