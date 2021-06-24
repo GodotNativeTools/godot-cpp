@@ -208,7 +208,10 @@ typedef float real_t;
 	do {                                     \
 		if (unlikely(cond)) {                \
 			FATAL_PRINT(ERR_MSG_COND(cond)); \
-			return;                          \
+			GENERATE_TRAP();                 \
+		}                                    \
+		else {                               \
+			((void)0);                       \
 		}                                    \
 	} while (0)
 #endif
