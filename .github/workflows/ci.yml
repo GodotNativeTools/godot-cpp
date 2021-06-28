@@ -43,6 +43,66 @@ jobs:
         run: |
           ./Godot_v3.2.3-stable_linux_server.64 --path test -s script.gd
 
+  linux-cmake:
+    name: Build (Linux, GCC, CMake)
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qqq build-essential pkg-config cmake
+          curl -LO https://downloads.tuxfamily.org/godotengine/3.2.3/Godot_v3.2.3-stable_linux_server.64.zip
+          unzip Godot_v3.2.3-stable_linux_server.64.zip
+
+      - name: Build godot-cpp
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Release .
+          make -j $(nproc)
+
+      - name: Build test GDNative library
+        run: |
+          cd test && cmake -DCMAKE_BUILD_TYPE=Release .
+          make -j $(nproc)
+
+      - name: Run test GDNative library
+        run: |
+          ./Godot_v3.2.3-stable_linux_server.64 --path test -s script.gd
+
+  linux-cmake-ninja:
+    name: Build (Linux, GCC, CMake Ninja)
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qqq build-essential pkg-config cmake ninja-build
+          curl -LO https://downloads.tuxfamily.org/godotengine/3.2.3/Godot_v3.2.3-stable_linux_server.64.zip
+          unzip Godot_v3.2.3-stable_linux_server.64.zip
+
+      - name: Build godot-cpp
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Release -GNinja .
+          cmake --build . -j $(nproc)
+
+      - name: Build test GDNative library
+        run: |
+          cd test && cmake -DCMAKE_BUILD_TYPE=Release -GNinja .
+          cmake --build . -j $(nproc)
+
+      - name: Run test GDNative library
+        run: |
+          ./Godot_v3.2.3-stable_linux_server.64 --path test -s script.gd
+
   windows-msvc:
     name: Build (Windows, MSVC)
     runs-on: windows-2019

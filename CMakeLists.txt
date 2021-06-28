@@ -133,7 +133,7 @@ else()
 endif()
 
 # Generate source from the bindings file
-find_package(PythonInterp REQUIRED)
+find_package(PythonInterp 3.4 REQUIRED) # pathlib should be present
 if(GENERATE_TEMPLATE_GET_NODE)
 	set(GENERATE_BINDING_PARAMETERS "True")
 else()
