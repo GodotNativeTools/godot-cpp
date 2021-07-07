@@ -249,6 +249,8 @@ struct Vector3 {
 		return std::abs(length_squared() - 1.f) < 0.00001f;
 	}
 
+	bool is_equal_approx(const Vector3 &p_v) const;
+
 	Basis outer(const Vector3 &b) const;
 
 	int max_axis() const;

@@ -310,6 +310,10 @@ real_t Basis::tdotz(const Vector3 &v) const {
 	return elements[0][2] * v[0] + elements[1][2] * v[1] + elements[2][2] * v[2];
 }
 
+bool Basis::is_equal_approx(const Basis &p_basis) const {
+	return elements[0].is_equal_approx(p_basis.elements[0]) && elements[1].is_equal_approx(p_basis.elements[1]) && elements[2].is_equal_approx(p_basis.elements[2]);
+}
+
 bool Basis::operator==(const Basis &p_matrix) const {
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
@@ -641,6 +645,19 @@ Basis::Basis(const Vector3 &p_axis, real_t p_phi) {
 	elements[2][0] = p_axis.z * p_axis.x * (1.0 - cosine) - p_axis.y * sine;
 	elements[2][1] = p_axis.y * p_axis.z * (1.0 - cosine) + p_axis.x * sine;
 	elements[2][2] = axis_sq.z + cosine * (1.0 - axis_sq.z);
+}
+
+Quat Basis::get_rotation_quat() const {
+	// Assumes that the matrix can be decomposed into a proper rotation and scaling matrix as M = R.S,
+	// and returns the Quaternion corresponding to the rotation part, complementing get_scale().
+	// See the comment in get_scale() for further information.
+	Basis m = orthonormalized();
+	real_t det = m.determinant();
+	if (det < 0) {
+		// Ensure that the determinant is 1, such that result is a proper rotation matrix which can be represented by Euler angles.
+		m.scale(Vector3(-1, -1, -1));
+	}
+	return m.operator Quat();
 }
 
 Basis::operator Quat() const {

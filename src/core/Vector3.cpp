@@ -84,6 +84,10 @@ void Vector3::snap(real_t p_val) {
 	z = Math::stepify(z, p_val);
 }
 
+bool Vector3::is_equal_approx(const Vector3 &p_v) const {
+	return Math::is_equal_approx(x, p_v.x) && Math::is_equal_approx(y, p_v.y) && Math::is_equal_approx(z, p_v.z);
+}
+
 Vector3::operator String() const {
 	return String::num(x) + ", " + String::num(y) + ", " + String::num(z);
 }

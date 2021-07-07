@@ -347,6 +347,8 @@ public:
 
 	Basis rotated(const Vector3 &p_axis, real_t p_phi) const;
 
+	Quat get_rotation_quat() const;
+
 	void scale(const Vector3 &p_scale);
 
 	Basis scaled(const Vector3 &p_scale) const;
@@ -367,6 +369,8 @@ public:
 	real_t tdotx(const Vector3 &v) const;
 	real_t tdoty(const Vector3 &v) const;
 	real_t tdotz(const Vector3 &v) const;
+
+	bool is_equal_approx(const Basis &p_basis) const;
 
 	bool operator==(const Basis &p_matrix) const;
 
