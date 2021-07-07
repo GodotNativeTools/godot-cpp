@@ -306,7 +306,7 @@ public:
 	Basis(const Vector3 &p_euler); // euler
 	Basis(const Vector3 &p_axis, real_t p_phi);
 
-	Basis(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2);
+	Basis(const Vector3 &x_axis, const Vector3 &y_axis, const Vector3 &z_axis);
 
 	Basis(real_t xx, real_t xy, real_t xz, real_t yx, real_t yy, real_t yz, real_t zx, real_t zy, real_t zz);
 

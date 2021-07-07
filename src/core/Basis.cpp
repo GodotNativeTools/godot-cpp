@@ -12,10 +12,10 @@ const Basis Basis::FLIP_X = Basis(-1, 0, 0, 0, 1, 0, 0, 0, 1);
 const Basis Basis::FLIP_Y = Basis(1, 0, 0, 0, -1, 0, 0, 0, 1);
 const Basis Basis::FLIP_Z = Basis(1, 0, 0, 0, 1, 0, 0, 0, -1);
 
-Basis::Basis(const Vector3 &row0, const Vector3 &row1, const Vector3 &row2) {
-	elements[0] = row0;
-	elements[1] = row1;
-	elements[2] = row2;
+Basis::Basis(const Vector3 &x_axis, const Vector3 &y_axis, const Vector3 &z_axis) {
+	set_axis(0, x_axis);
+	set_axis(1, y_axis);
+	set_axis(2, z_axis);
 }
 
 Basis::Basis(real_t xx, real_t xy, real_t xz, real_t yx, real_t yy, real_t yz, real_t zx, real_t zy, real_t zz) {
