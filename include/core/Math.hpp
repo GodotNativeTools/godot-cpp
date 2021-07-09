@@ -128,7 +128,7 @@ inline T max(T a, T b) {
 
 template <typename T>
 inline T sign(T x) {
-	return static_cast<T>(x < 0 ? -1 : 1);
+	return static_cast<T>(x < 0 ? -1 : (x > 0 ? 1 : 0));
 }
 
 inline double deg2rad(double p_y) {
