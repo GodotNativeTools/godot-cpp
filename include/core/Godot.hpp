@@ -496,7 +496,7 @@ void register_property(const char *name, void (T::*setter)(P), P (T::*getter)() 
 }
 
 template <class T>
-void register_signal(String name, Dictionary args = Dictionary()) {
+void register_signal(String name, Dictionary args) {
 	static_assert(T::___CLASS_IS_SCRIPT, "This function must only be used on custom classes");
 
 	godot_signal signal = {};
@@ -538,6 +538,17 @@ void register_signal(String name, Dictionary args = Dictionary()) {
 template <class T, class... Args>
 void register_signal(String name, Args... varargs) {
 	register_signal<T>(name, Dictionary::make(varargs...));
+}
+
+template <class T>
+void register_signal(String name) {
+	static_assert(T::___CLASS_IS_SCRIPT, "This function must only be used on custom classes");
+
+	godot_signal signal = {};
+	signal.name = *(godot_string *)&name;
+
+	godot::nativescript_api->godot_nativescript_register_signal(godot::_RegisterState::nativescript_handle,
+			T::___get_class_name(), &signal);
 }
 
 #ifndef GODOT_CPP_NO_OBJECT_CAST
