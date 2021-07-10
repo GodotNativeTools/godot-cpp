@@ -61,6 +61,11 @@ String::String(const char *contents) {
 	godot::api->godot_string_parse_utf8(&_godot_string, contents);
 }
 
+String::String(const char *contents, int len) {
+    godot::api->godot_string_new(&_godot_string);
+    godot::api->godot_string_parse_utf8_with_len(&_godot_string, contents, len);
+}
+
 String::String(const wchar_t *contents) {
 	godot::api->godot_string_new_with_wide_string(&_godot_string, contents, wcslen(contents));
 }

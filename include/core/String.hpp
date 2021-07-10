@@ -37,6 +37,7 @@ class String {
 public:
 	String();
 	String(const char *contents);
+	String(const char *contents, int len);
 	String(const wchar_t *contents);
 	String(const wchar_t c);
 	String(const String &other);
