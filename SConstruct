@@ -465,9 +465,12 @@ add_sources(sources, 'src/gen', 'cpp')
 arch_suffix = env['bits']
 if env['platform'] == 'android':
     arch_suffix = env['android_arch']
-if env['platform'] == 'ios':
+elif env['platform'] == 'ios':
     arch_suffix = env['ios_arch']
-if env['platform'] == 'javascript':
+elif env['platform'] == 'osx':
+    if env['macos_arch'] != 'x86_64':
+         arch_suffix = env['macos_arch']
+elif env['platform'] == 'javascript':
     arch_suffix = 'wasm'
 
 library = env.StaticLibrary(
