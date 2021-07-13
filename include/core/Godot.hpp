@@ -9,7 +9,6 @@
 #include <typeinfo>
 
 #include "CoreTypes.hpp"
-#include "Ref.hpp"
 #include "TagDB.hpp"
 #include "Variant.hpp"
 
