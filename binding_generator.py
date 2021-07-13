@@ -361,6 +361,22 @@ def generate_class_header(used_classes, c, use_template_get_node):
         source.append("\treturn get_node_internal(path);")
         source.append("}")
         source.append("")
+    elif use_template_get_node and class_name == "PackedScene":
+        # Extra definition for template get_node that calls the renamed get_node_internal; has a default template parameter for backwards compatibility.
+        source.append("\ttemplate <class T = Node>")
+        source.append("\tT *instance(const int64_t edit_state = 0) const {")
+        source.append("\t\treturn Object::cast_to<T>(instance(edit_state));")
+        source.append("\t}")
+
+        source.append("};")
+        source.append("")
+
+        # ...And a specialized version so we don't unnecessarily cast when using the default.
+        source.append("template <>")
+        source.append("inline Node *PackedScene::instance<Node>(const int64_t edit_state) const {")
+        source.append("\treturn instance(edit_state);")
+        source.append("}")
+        source.append("")
     else:
         source.append("};")
         source.append("")
