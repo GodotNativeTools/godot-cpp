@@ -310,7 +310,7 @@ elif env['platform'] == 'windows':
             env['AR'] = "i686-w64-mingw32-ar"
             env['RANLIB'] = "i686-w64-mingw32-ranlib"
             env['LINK'] = "i686-w64-mingw32-g++"
-    
+
     elif host_platform == 'windows' and env['use_mingw']:
         # Don't Clone the environment. Because otherwise, SCons will pick up msvc stuff.
         env = Environment(ENV = os.environ, tools=["mingw"])
@@ -445,22 +445,57 @@ if 'custom_api_file' in env:
 else:
     json_api_file = os.path.join(os.getcwd(), env['headers_dir'], 'api.json')
 
-if env['generate_bindings'] == 'auto':
-    # Check if generated files exist
-    should_generate_bindings = not os.path.isfile(os.path.join(os.getcwd(), 'src', 'gen', 'Object.cpp'))
-else:
-    should_generate_bindings = env['generate_bindings'] in ['yes', 'true']
-
-if should_generate_bindings:
-    # Actually create the bindings here
-    import binding_generator
-
-    binding_generator.generate_bindings(json_api_file, env['generate_template_get_node'])
 
 # Sources to compile
 sources = []
 add_sources(sources, 'src/core', 'cpp')
-add_sources(sources, 'src/gen', 'cpp')
+# Further sources are added below,
+# depends on if the bindings are generated or not
+
+if env['generate_bindings'] in ['yes', 'true', 'auto']:
+    import binding_generator
+
+    # Generate list of target files from api file.
+    # This could be done with an emitter in the builder below,
+    # but we need also some of these names (*.cpp)
+    # to add as source files of the library.
+    output_files = binding_generator.get_output_files(
+        json_api_file, env['generate_template_get_node'])
+
+    # All generated file names will be in here:
+    generate_target = []
+
+    for f in output_files:
+        # The cpp files are required for building later, add them as source files
+        # (Globs can't be used here, as the files may not exist yet)
+        # This also adds an implicit dependency from the library builder
+        # to the binding generator, which makes it run automatically.
+        if f.suffix == '.cpp':
+            sources.append(str(f))
+
+        # Convert all the paths to string, SCons does not like Paths
+        generate_target.append(str(f))
+
+    # Builder to Generate target files from api file
+    def build_function(target, source, env):
+        if len(source) != 1:
+            raise ValueError('Expected single source *.json, got {}'.format(len(source)))
+
+        source_path = source[0].get_path()
+        print('Generating {} files from {}'.format(len(target), source_path))
+        binding_generator.generate_bindings(source_path, env['generate_template_get_node'])
+
+    bindings_builder = Builder(action=build_function)
+    env.Append(BUILDERS={'Bindings': bindings_builder})
+
+    # Use the defined builder to let SCons handle generating of the files if needed.
+    # The builder will be called by SCons if any of the expected files are missing,
+    # or if the json_api_file changes.
+    build_bindings = env.Bindings(generate_target, json_api_file)
+
+else: # No binding generation wanted, use what exists on disk
+    # Add existing generated sources, if they exist
+    add_sources(sources, 'src/gen', 'cpp')
 
 arch_suffix = env['bits']
 if env['platform'] == 'android':

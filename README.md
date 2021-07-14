@@ -99,7 +99,7 @@ The final step is to compile our C++ bindings library:
 
 ```bash
 cd godot-cpp
-scons platform=<your platform> generate_bindings=yes
+scons platform=<your platform>
 cd ..
 ```
 
@@ -116,7 +116,7 @@ Download the latest [Android NDK](https://developer.android.com/ndk/downloads)
 and set the NDK path.
 
 ```bash
-scons platform=android generate_bindings=yes ANDROID_NDK_ROOT="/PATH-TO-ANDROID-NDK/" android_arch=<arch>
+scons platform=android ANDROID_NDK_ROOT="/PATH-TO-ANDROID-NDK/" android_arch=<arch>
 ```
 
 The value of `android_arch` can be `armv7, arm64v8, x86, x86_64`. Most Android
@@ -136,6 +136,8 @@ You can optionally add the following options to the SCons command line:
 - To use an alternative `api.json` file, add `use_custom_api_file=yes
   custom_api_file=../api.json`. Be sure to specify the correct location where
   you placed your file (it can be a relative or absolute path).
+- To skip automatic generation of bindings (`src/gen` and `include/gen`), add `generate_bindings=no`.
+  This will use files in the gen directories as sources/headers, but not change them.
 
 ## Creating a simple class
 

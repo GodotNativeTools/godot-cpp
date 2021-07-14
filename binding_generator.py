@@ -39,6 +39,37 @@ def print_file_list(api_filepath, output_dir, headers=False, sources=False):
         print(str(init_method_bindings_filename.as_posix()), end=end)
 
 
+def get_output_files(api_filepath, use_template_get_node, output_dir="."):
+    output_files = []
+
+    with open(api_filepath) as api_file:
+        classes = json.load(api_file)
+
+    include_gen_folder = Path(output_dir) / 'include' / 'gen'
+    source_gen_folder = Path(output_dir) / 'src' / 'gen'
+
+    for c in classes:
+        if use_template_get_node and c["name"] == "Node":
+            correct_method_name(c["methods"])
+
+        header_filename = include_gen_folder / (strip_name(c["name"]) + ".hpp")
+        output_files.append(header_filename)
+
+        source_filename = source_gen_folder / (strip_name(c["name"]) + ".cpp")
+        output_files.append(source_filename)
+
+    icall_header_filename = include_gen_folder / '__icalls.hpp'
+    output_files.append(icall_header_filename)
+
+    register_types_filename = source_gen_folder / '__register_types.cpp'
+    output_files.append(register_types_filename)
+
+    init_method_bindings_filename = source_gen_folder / '__init_method_bindings.cpp'
+    output_files.append(init_method_bindings_filename)
+
+    return output_files
+
+
 def generate_bindings(api_filepath, use_template_get_node, output_dir="."):
     global classes
     with open(api_filepath) as api_file:
