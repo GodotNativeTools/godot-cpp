@@ -294,7 +294,7 @@ def generate_class_header(used_classes, c, use_template_get_node):
                     return default_value.lower()
                 if _type == "Array":
                     return "Array()"
-                if _type in ["PoolVector2Array", "PoolStringArray", "PoolVector3Array", "PoolColorArray", "PoolIntArray", "PoolRealArray"]:
+                if _type in ["PoolVector2Array", "PoolStringArray", "PoolVector3Array", "PoolColorArray", "PoolIntArray", "PoolRealArray", "PoolByteArray"]:
                     return _type + "()"
                 if _type == "Vector2":
                     return "Vector2" + default_value
